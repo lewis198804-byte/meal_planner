@@ -1,0 +1,21 @@
+# Python essentials
+__pycache__/
+*.py[cod]
+venv/
+env/
+.venv/
+thisenv/
+
+# Your recipe books
+recipe_books/
+
+# IDE/OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Local DB/data
+*.db
+*.sqlite*
+.env

@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Bootstrap demo</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+  </head>
+  <body>
+    <section>
+        <header >
+            <div class="card text-center mt-5 mx-auto" style="width:40em">
+                <h1>Meal Planner</h1>
+            </div>
+        </header>
+    </section>
+    <section>
+        
+        <div class="card text-center mt-5 mx-auto" style="width:50em">
+            <form method="POST" action="/recipe_save">
+               <div class="mb-3 mx-auto" style="width:20em">
+                    <label for="recipe_name" class="form-label">Recipe Name</label>
+                    <input type="text" required class="form-control" id="recipe_name" name="recipe_name">
+                </div>
+                <div class="mb-3 mx-auto" style="width:20em">
+                    <label for="where" class="form-label">Where?</label>
+                    <input type="text" required class="form-control" id="where" name="where">
+                </div>
+                <div class="mb-3 mx-auto" style="width:20em">
+                    <label for="page_number" class="form-label">Page Number</label>
+                    <input type="text" class="form-control" id="page_number" name="page_number">
+                </div>
+                <div class="mb-3 mx-auto" style="width:20em">
+                    <label for="rating" class="form-label">Rating</label>
+                    <input type="text" class="form-control" id="rating" name="rating">
+                </div>
+                <div class="mb-3 mx-auto" style="width:20em">
+                    <label for="ingredients" class="form-label">Ingredients</label>
+                    <input type="text" class="form-control" id="ingredients" name="ingredients">
+                    <small>Comma seperated list</small>
+                </div>
+                <div class="mb-3 mx-auto" style="width:20em">
+                    <label for="picture" class="form-label">Picture</label>
+                    <button class = "btn btn-primary">Upload</button>
+                </div>
+                <p><button class="btn btn-primary">Submit</button></p>
+            </form>
+        </div>
+    </section>
+   
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+  </body>
+</html>

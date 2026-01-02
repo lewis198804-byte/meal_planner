@@ -15,18 +15,16 @@
         </header>
     </section>
     <section>
-        <div class="card mt-5 mx-auto" style="width:70em">
-            this weeks menu
-            <div class="card text-center " >Monday</div>
-            <div class="card text-center  " >Tuesday</div>
-            <div class="card text-center  mx-auto" >Wednesday</div>
-            <div class="card text-center  mx-auto" >Thursday</div>
-            <div class="card text-center  mx-auto" >Friday</div>
-            <div class="card text-center  mx-auto" >Saturday</div>
-            <div class="card text-center  mx-auto" >Sunday</div>
-        </div>
+        
         <div class="card text-center mt-5 mx-auto" style="width:50em">
-            <p><a href="/add_recipe" class="btn btn-primary">Add Recipe</a> <a href="/recipes" class="btn btn-primary">Recipes</a> <button class="btn btn-primary">Generate new menu</button></p>
+            <form method="POST" action="/analyze-recipe" enctype="multipart/form-data">
+               <div class="mb-3 mx-auto" style="width:20em">
+                    <label for="photo" class="form-label">photo</label>
+                    <input type="file" required class="form-control" id="image" name="image">
+                </div>
+               
+                <p><button class="btn btn-primary">Submit</button></p>
+            </form>
         </div>
     </section>
    

@@ -1,7 +1,13 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify
 import sqlite3
-import pdfplumber
+import requests
+import base64
+import json
+from dotenv import load_dotenv
+import os
 
+load_dotenv()
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 app = Flask(__name__)
 
 def database_con(query):
@@ -21,13 +27,18 @@ def build_database():
     cur.execute("CREATE TABLE recipes (" \
     "id INTEGER PRIMARY KEY AUTOINCREMENT," \
     "name TEXT," \
-    "ingredients TEXT,"\
     "location TEXT," \
     "page_nu INTEGER," \
+    "difficulty,"\
     "rating INTEGER)")
     cur.execute("CREATE TABLE ingredients (" \
     "id INTEGER PRIMARY KEY AUTOINCREMENT," \
     "name TEXT," \
+    "quantity TEXT,"\
+    "recipe_id INTEGER)")
+    cur.execute("CREATE TABLE instructions (" \
+    "id INTEGER PRIMARY KEY AUTOINCREMENT," \
+    "step_details TEXT," \
     "recipe_id INTEGER)")
     con.commit()
     con.close()
@@ -36,6 +47,14 @@ def build_database():
 @app.route("/add_recipe")
 def add_recipe():
     return render_template("add_recipe.html")
+
+@app.route("/recipes")
+def recipes():
+    return render_template("recipes.html")
+
+@app.route("/vision_test")
+def vision_test():
+    return render_template("vision_test.html")
 
 
 @app.route("/recipe_save", methods=["POST"])
@@ -63,7 +82,76 @@ def recipe_save():
     con.close()
     return render_template("recipe_save.html",recipeName = formData['recipe_name'])
 
+@app.route("/get_recipes")
+def get_recipes():
+    con = sqlite3.connect("database.db")
+    cur = con.cursor()
+    cur.execute("SELECT * FROM recipes ORDER BY id")
+    response = cur.fetchall()
+    con.close()
+    return response
 
+
+@app.route("/del_recipe/<recipe_id>")
+def delete_recipe(recipe_id):
+    con = sqlite3.connect("database.db")
+    cur = con.cursor()
+    cur.execute("DELETE FROM recipes WHERE id = ?", (recipe_id))
+    cur.execute("DELETE FROM ingredients WHERE recipe_id = ?",(recipe_id))
+    con.commit()
+    con.close()
+    return "deleted"
+
+
+@app.route('/analyze-recipe', methods=['POST'])
+def analyze_recipe():
+    if 'image' not in request.files:
+        return jsonify({'error': 'Missing image file'}), 400
+    
+    # Read + encode uploaded image
+    img_data = request.files['image'].read()
+    img_b64 = base64.b64encode(img_data).decode()
+    
+    headers = {
+        'Authorization': f'Bearer {OPENAI_API_KEY}',
+        'Content-Type': 'application/json'
+    }
+    
+    payload = {
+        'model': 'gpt-4o-mini',
+        'messages': [{
+            'role': 'user',
+            'content': [
+                {'type': 'text', 'text': '''
+                    Analyze this recipe photo. Extract as JSON:
+                    {
+                      "title": "",
+                      "ingredients": ["item qty unit"],
+                      "instructions": ["step 1", "step 2"],
+                      "servings": "",
+                      "prep_time": "",
+                      "cuisine": "",
+                      "difficulty": "easy/medium/hard",
+                      "page_number": ""
+                 
+                    }
+                    Output ONLY valid JSON.
+                '''},
+                {'type': 'image_url', 'image_url': {'url': f'data:image/jpeg;base64,{img_b64}'}}
+            ]
+        }],
+        'max_tokens': 800,
+        'temperature': 0.1
+    }
+    
+    response = requests.post('https://api.openai.com/v1/chat/completions', 
+                           headers=headers, json=payload)
+    
+    if response.status_code != 200:
+        return jsonify({'error': response.json()}), 500
+    
+    result = response.json()['choices'][0]['message']['content']
+    return jsonify({'recipe': result})
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0',port=5002)

@@ -123,19 +123,22 @@ def analyze_recipe():
             'role': 'user',
             'content': [
                 {'type': 'text', 'text': '''
-                    Analyze this recipe photo. Extract as JSON:
+                    Analyze this recipe photo. Extract as RAW JSON only with no formatting. 
+                    When describing the ingredients do not use commas within a single ingredient description as the ingredients will be split using comma as a seperator. 
+                    individual_ingredients should not include quantities or units as this will be used to create the overall shopping list
+                    Output will be read by python program:
                     {
-                      "title": "",
+                      "recipe_name": "",
                       "ingredients": ["item qty unit"],
+                      "individual_ingredients": ["item"]
                       "instructions": ["step 1", "step 2"],
                       "servings": "",
                       "prep_time": "",
-                      "cuisine": "",
                       "difficulty": "easy/medium/hard",
                       "page_number": ""
                  
                     }
-                    Output ONLY valid JSON.
+                    Output ONLY valid JSON. 
                 '''},
                 {'type': 'image_url', 'image_url': {'url': f'data:image/jpeg;base64,{img_b64}'}}
             ]

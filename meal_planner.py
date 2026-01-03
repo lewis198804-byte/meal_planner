@@ -125,12 +125,11 @@ def analyze_recipe():
                 {'type': 'text', 'text': '''
                     Analyze this recipe photo. Extract as RAW JSON only with no formatting. 
                     When describing the ingredients do not use commas within a single ingredient description as the ingredients will be split using comma as a seperator. 
-                    individual_ingredients should not include quantities or units as this will be used to create the overall shopping list
+                    Any temperatures should be in celcius as i live in the UK. 
                     Output will be read by python program:
                     {
                       "recipe_name": "",
                       "ingredients": ["item qty unit"],
-                      "individual_ingredients": ["item"]
                       "instructions": ["step 1", "step 2"],
                       "servings": "",
                       "prep_time": "",

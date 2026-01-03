@@ -27,45 +27,69 @@
             </form>
             <p><button onclick="submitToAi()" class="btn btn-primary">Submit</button></p>
         </div>
-
-        <div class="card mt-5">
-            <form id="recipe_details">
-                <div class="mb-3 mx-auto text-center" style="width:15em">
-                    <label class="form-label" for="recipe_name">Recipe Name</label>
-                    <input type="text" name="recipe_name" id="recipe_name">
+        <div class="container">
+            <div class="row">
+                <div class="col col-12 col-md-6">
+                    <div class="card text-center mt-5 mx-auto" >
+                        <h1 id="recipe_name_h1" class="mb-3 mt-3"></h1>
+                        <div class="mb-3">
+                            <h3>Ingredients</h3>
+                            <ul id="ingredients_list" class="list-group">
+                                <li class="list-group-item">No ingredients yet</li>
+                            </ul>
+                        </div>
+                        <div class="mb-3">
+                            <h3>Instructions</h3>
+                            <ul id="instructions_list" class="list-group">
+                                <li class="list-group-item">No instructions yet</li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
-                <div class="mb-3 mx-auto text-center" style="width:15em">
-                    <label class="form-label"  for="recipe_location">Recipe Location</label>
-                    <input type="text" name="where" id="recipe_location">
+                <div class="col col-12 col-md-6">
+                    <div class="card mt-5">
+                        <form id="recipe_details">
+                            <div class="mb-3 mx-auto text-center" style="width:15em">
+                                <label class="form-label" for="recipe_name">Recipe Name</label>
+                                <input type="text" name="recipe_name" id="recipe_name">
+                            </div>
+                            <div class="mb-3 mx-auto text-center" style="width:15em">
+                                <label class="form-label"  for="recipe_location">Recipe Location</label>
+                                <input type="text" name="where" id="recipe_location">
+                            </div>
+                            <div class="mb-3 mx-auto text-center" style="width:15em">
+                                <input type="radio" id="easy_difficulty" name="easy_difficulty" value="Easy">
+                                <label for="easy_difficulty">Easy</label><br>
+                                <input type="radio" id="med_difficulty" name="med_difficulty" value="Medium">
+                                <label for="med_difficulty">Medium</label><br>
+                                <input type="radio" id="hard_difficulty" name="hard_difficulty" value="Hard">
+                                <label for="hard_difficulty">Hard</label><br>
+                            </div>
+                            <div class="mb-3 mx-auto text-center" style="width:15em">
+                                <label class="form-label"  for="page_number">Page Number?</label>
+                                <input type="text" name="page_number" id="page_number">
+                            </div>
+                            <div class="mb-3 mx-auto text-center" style="width:15em">
+                                <label class="form-label"  for="instructions">Instructions</label>
+                                <input type="text" name="instructions" id="instructions">
+                            </div>
+                            <div class="mb-3 mx-auto text-center" style="width:15em">
+                                <label class="form-label"  for="ingredients">Ingredients</label>
+                                <input type="text" name="ingredients" id="ingredients">
+                            </div>
+                        </form>
+                    </div>
                 </div>
-                <div class="mb-3 mx-auto text-center" style="width:15em">
-                    <input type="radio" id="easy_difficulty" name="easy_difficulty" value="Easy">
-                    <label for="easy_difficulty">Easy</label><br>
-                    <input type="radio" id="med_difficulty" name="med_difficulty" value="Medium">
-                    <label for="med_difficulty">Medium</label><br>
-                    <input type="radio" id="hard_difficulty" name="hard_difficulty" value="Hard">
-                    <label for="hard_difficulty">Hard</label><br>
+            </div>
+            <div class="row">
+                <div class="col col-12">
+                    <div class=" text-center mt-3">
+                        <p><button class="btn btn-primary mt-5">Save Recipe</button></p>
+                    </div>
                 </div>
-                <div class="mb-3 mx-auto text-center" style="width:15em">
-                    <label class="form-label"  for="page_number">Page Number?</label>
-                    <input type="text" name="page_number" id="page_number">
-                </div>
-                <div class="mb-3 mx-auto text-center" style="width:15em">
-                    <label class="form-label"  for="instructions">Instructions</label>
-                    <input type="text" name="instructions" id="instructions">
-                </div>
-                <div class="mb-3 mx-auto text-center" style="width:15em">
-                    <label class="form-label"  for="ingredients">Ingredients</label>
-                    <input type="text" name="ingredients" id="ingredients">
-                </div>
-            </form>
+            </div>
         </div>
-        <div class="card">
-            <ul id="ingredients_list">
-                <li>No ingredients yet</li>
-            </ul>
-
-        </div>
+        
     </section>
    
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
@@ -82,12 +106,15 @@
         const easy_dif = document.getElementById("easy_difficulty")
         const med_dif = document.getElementById("med_difficulty")
         const hard_dif = document.getElementById("hard_difficulty")
+        const recipe_name_header = document.getElementById("recipe_name_h1")
 
         const ingredients_list = document.getElementById("ingredients_list")
+        const instructions_list = document.getElementById("instructions_list")
 
         async function submitToAi(){
             const formData = new FormData(form)
             let ingredients_list_items = ""
+            let instructions_list_items = ""
             const response = await fetch("/analyze-recipe", {
             method: 'POST',
             body: formData,
@@ -100,12 +127,19 @@
             title_field.value = recipe.recipe_name
             ingredients.value = recipe.ingredients
 
-
             recipe.ingredients.forEach(element => {
-                ingredients_list_items += "<li>"+element+"</li>"
+                ingredients_list_items += "<li class='list-group-item'>"+element+"</li>"
             });
 
             ingredients_list.innerHTML = ingredients_list_items
+
+            recipe.instructions.forEach(element => {
+                instructions_list_items += "<li class='list-group-item'>"+element+"</li>"
+            });
+
+            instructions_list.innerHTML = instructions_list_items
+
+            recipe_name_header.innerHTML = recipe.recipe_name
             console.log(recipe.individual_ingredients)
         }
 

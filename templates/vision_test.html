@@ -48,36 +48,63 @@
                 </div>
                 <div class="col col-12 col-md-6">
                     <div class="card mt-5">
-                        <form id="recipe_details">
-                            <div class="mb-3 mx-auto text-center" style="width:15em">
-                                <label class="form-label" for="recipe_name">Recipe Name</label>
-                                <input type="text" name="recipe_name" id="recipe_name">
+                        <div class="accordion" id="accordionExample">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                                    Identified Content
+                                </button>
+                                </h2>
+                                <div id="collapseOne" class="accordion-collapse collapse show" data-bs-parent="#accordionExample">
+                                <div class="accordion-body">
+                                    <strong>These are the details detected in the image you uploaded.</strong> 
+                                    <form id="recipe_details">
+                                        <div class="mb-3 mt-3 mx-auto text-center" style="width:15em">
+                                            <label class="form-label" for="recipe_name">Recipe Name</label>
+                                            <input type="text" name="recipe_name" id="recipe_name">
+                                        </div>
+                                        <div class="mb-3 mx-auto text-center" style="width:15em">
+                                            <label class="form-label"  for="instructions">Instructions</label>
+                                            <input type="text" name="instructions" id="instructions">
+                                        </div>
+                                        <div class="mb-3 mx-auto text-center" style="width:15em">
+                                            <label class="form-label"  for="ingredients">Ingredients</label>
+                                            <textarea style="height:15em;" name="ingredients" id="ingredients" aria-describedby="ingredients-help"></textarea>
+                                            <div id="ingredients-help" class="form-text">Ingredients from the recipe</div>
+                                        </div>
+                                    </form>
+                                </div>
                             </div>
-                            <div class="mb-3 mx-auto text-center" style="width:15em">
-                                <label class="form-label"  for="recipe_location">Recipe Location</label>
-                                <input type="text" name="where" id="recipe_location">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="true" aria-controls="collapseOne">
+                                    Additional Details
+                                </button>
+                                </h2>
+                                <div id="collapseTwo" class="accordion-collapse collapse show" data-bs-parent="#accordionExample">
+                                <div class="accordion-body">
+                                    <strong>Add additional details that may not have been detected by the AI agent.</strong> 
+                                    <form id="recipe_details">
+                                        <div class="mb-3 mx-auto text-center" style="width:15em">
+                                            <label class="form-label"  for="recipe_location">Recipe Location</label>
+                                            <input type="text" name="where" id="recipe_location">
+                                        </div>
+                                        <div class="mb-3 mx-auto text-center" style="width:15em">
+                                            <label class="form-label"  for="page_number">Page Number?</label>
+                                            <input type="text" name="page_number" id="page_number">
+                                        </div>
+                                        <div class="mb-3 mx-auto text-center" style="width:15em"></div>
+                                            <label for="range4" class="form-label">Difficulty</label>
+                                            <input type="range" class="form-range" step="1" min="0" max="2" value="0" id="range4">
+                                            <output for="range4" id="rangeValue" aria-hidden="true" ></output>
+                                        </div>
+                                    </form>
+                                </div>
                             </div>
-                            <div class="mb-3 mx-auto text-center" style="width:15em">
-                                <input type="radio" id="easy_difficulty" name="easy_difficulty" value="Easy">
-                                <label for="easy_difficulty">Easy</label><br>
-                                <input type="radio" id="med_difficulty" name="med_difficulty" value="Medium">
-                                <label for="med_difficulty">Medium</label><br>
-                                <input type="radio" id="hard_difficulty" name="hard_difficulty" value="Hard">
-                                <label for="hard_difficulty">Hard</label><br>
+                                
                             </div>
-                            <div class="mb-3 mx-auto text-center" style="width:15em">
-                                <label class="form-label"  for="page_number">Page Number?</label>
-                                <input type="text" name="page_number" id="page_number">
-                            </div>
-                            <div class="mb-3 mx-auto text-center" style="width:15em">
-                                <label class="form-label"  for="instructions">Instructions</label>
-                                <input type="text" name="instructions" id="instructions">
-                            </div>
-                            <div class="mb-3 mx-auto text-center" style="width:15em">
-                                <label class="form-label"  for="ingredients">Ingredients</label>
-                                <input type="text" name="ingredients" id="ingredients">
-                            </div>
-                        </form>
+                        </div>
+                        
                     </div>
                 </div>
             </div>
@@ -110,6 +137,26 @@
 
         const ingredients_list = document.getElementById("ingredients_list")
         const instructions_list = document.getElementById("instructions_list")
+
+        const rangeInput = document.getElementById('range4');
+        const rangeOutput = document.getElementById('rangeValue');
+
+        // Set initial value
+        rangeOutput.textContent = "Easy";
+        let difficulty_text = 0
+        rangeInput.addEventListener('input', function() {
+            if (this.value == 0){
+                difficulty_text = "Easy"
+            }
+            if (this.value == 1){
+                difficulty_text = "Medium"
+            }
+            if (this.value == 2){
+                difficulty_text = "Hard"
+            }
+            rangeOutput.textContent = difficulty_text;
+        });
+
 
         async function submitToAi(){
             const formData = new FormData(form)

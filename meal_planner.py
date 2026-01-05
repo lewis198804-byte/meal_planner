@@ -36,6 +36,16 @@ def build_database():
     "id INTEGER PRIMARY KEY AUTOINCREMENT," \
     "name TEXT," \
     "recipe_id INTEGER)")
+    cur.execute("CREATE TABLE meal_plan (" \
+    "id INTEGER PRIMARY KEY AUTOINCREMENT," \
+    "monday_recipe_id INTEGER," \
+    "tuesday_recipe_id INTEGER," \
+    "wednesday_recipe_id INTEGER," \
+    "thursday_recipe_id INTEGER," \
+    "friday_recipe_id INTEGER," \
+    "saturday_recipe_id INTEGER," \
+    "current_plan BOOL," \
+    "sunday_recipe_id INTEGER)")
     con.commit()
     con.close()
     return "database built"
@@ -48,9 +58,9 @@ def add_recipe():
 def recipes():
     return render_template("recipes.html")
 
-@app.route("/vision_test")
-def vision_test():
-    return render_template("vision_test.html")
+@app.route("/ai_recipe_add")
+def ai_recipe_add():
+    return render_template("ai_recipe_add.html")
 
 
 @app.route("/recipe_save", methods=["POST"])
@@ -103,7 +113,7 @@ def save_ai_recipe():
     con.close()
     return "added"
 
-@app.route("/get_recipes")
+@app.route("/get_recipes", methods=['POST'])
 def get_recipes():
     con = sqlite3.connect("database.db")
     cur = con.cursor()
@@ -113,7 +123,7 @@ def get_recipes():
     return response
 
 
-@app.route("/del_recipe/<recipe_id>")
+@app.route("/del_recipe/<recipe_id>", methods=['POST'])
 def delete_recipe(recipe_id):
     con = sqlite3.connect("database.db")
     cur = con.cursor()

@@ -37,7 +37,7 @@
                                             
                             
                         </form>
-                        <p><button onclick="submitToAi()" class="btn btn-primary">Submit</button></p>
+                        <p><button onclick="submitToAi()" id="ai_submit_button" class="btn btn-primary">Submit</button></p>
                     </div>
                 </div>
             </div>
@@ -141,7 +141,7 @@
             <div class="row">
                 <div class="col col-12">
                     <div class=" text-center mt-3">
-                        <p><button class="btn btn-primary mt-5">Save Recipe</button></p>
+                        <p><button class="btn btn-primary mt-5" onclick='save_recipe()'>Save Recipe</button></p>
                     </div>
                 </div>
             </div>
@@ -154,7 +154,7 @@
 
         const form = document.getElementById("ai_form");
 
-        const title_field = document.getElementById("recipe_name")
+        const name_field = document.getElementById("recipe_name")
         const recipe_location = document.getElementById("recipe_location")
         const recipe_difficulty = document.getElementById("recipe_difficulty")
         const page_number = document.getElementById("page_number")
@@ -164,6 +164,7 @@
         const med_dif = document.getElementById("med_difficulty")
         const hard_dif = document.getElementById("hard_difficulty")
         const recipe_name_header = document.getElementById("recipe_name_h1")
+        const recipe_photo = document.getElementById("recipe_photo")
 
         const ingredients_list = document.getElementById("ingredients_list")
         const instructions_list = document.getElementById("instructions_list")
@@ -172,10 +173,13 @@
         const rangeOutput = document.getElementById('rangeValue');
 
         const spinner_div = document.getElementById('spinner');
+        const ai_submit_button = document.getElementById("ai_submit_button")
+
+
         spinner_div.hidden = true;
         // Set initial value
         rangeOutput.textContent = "Easy";
-        let difficulty_text = 0
+        let difficulty_text = "Easy"
         rangeInput.addEventListener('input', function() {
             if (this.value == 0){
                 difficulty_text = "Easy"
@@ -193,6 +197,7 @@
         async function submitToAi(){
             const formData = new FormData(form)
             spinner_div.hidden = false;
+            ai_submit_button.disabled = true;
             let ingredients_list_items = ""
             let instructions_list_items = ""
             const response = await fetch("/analyze-recipe", {
@@ -204,7 +209,7 @@
             const recipe = JSON.parse(data.recipe)
             //console.log(recipe)
 
-            title_field.value = recipe.recipe_name
+            name_field.value = recipe.recipe_name
             ingredients.value = recipe.ingredients
             instructions.value = recipe.instructions
 
@@ -222,9 +227,23 @@
 
             recipe_name_header.innerHTML = recipe.recipe_name
             spinner_div.hidden = true;
-            console.log(recipe.individual_ingredients)
+            ai_submit_button.disabled = false;
         }
 
+        async function save_recipe(){
+            const response = await fetch("/save_ai_recipe", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({'recipe_name': name_field.value, 'location': recipe_location.value, 'page_number': page_number.value, 'instructions': instructions.value, 'ingredients': ingredients.value, 'difficulty': difficulty_text,'recipe_photo': recipe_photo.value })
+            })
+
+            const insert_response = await response
+            if (insert_response.ok){
+                console.log("recipe saved successfully")
+            }
+        }
     </script>
 
     </body>

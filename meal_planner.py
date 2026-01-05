@@ -29,16 +29,12 @@ def build_database():
     "name TEXT," \
     "location TEXT," \
     "page_nu INTEGER," \
-    "difficulty,"\
-    "rating INTEGER)")
+    "instructions JSON," \
+    "photo_path TEXT,"\
+    "difficulty TEXT)")
     cur.execute("CREATE TABLE ingredients (" \
     "id INTEGER PRIMARY KEY AUTOINCREMENT," \
     "name TEXT," \
-    "quantity TEXT,"\
-    "recipe_id INTEGER)")
-    cur.execute("CREATE TABLE instructions (" \
-    "id INTEGER PRIMARY KEY AUTOINCREMENT," \
-    "step_details TEXT," \
     "recipe_id INTEGER)")
     con.commit()
     con.close()
@@ -81,6 +77,31 @@ def recipe_save():
     con.commit()
     con.close()
     return render_template("recipe_save.html",recipeName = formData['recipe_name'])
+
+@app.route("/save_ai_recipe", methods=['POST'])
+def save_ai_recipe():
+    rec_data = request.get_json()
+    con = sqlite3.connect("database.db")
+    cur = con.cursor()
+    cur.execute("INSERT INTO recipes (name,location,page_nu,instructions,difficulty,photo_path) VALUES (?,?,?,?,?,?)" ,(rec_data['recipe_name'], rec_data['location'], rec_data['page_number'],rec_data['instructions'],rec_data['difficulty'],rec_data['recipe_photo']))
+    
+    recipe_id = cur.lastrowid
+    ingredients_strings = rec_data['ingredients'].split(",")
+    ingredients_list = []
+    
+    for item in ingredients_strings:
+        
+        if len(item.strip()) > 0:
+            this_ingredient = (item.strip(), recipe_id)
+            ingredients_list.append(this_ingredient)
+    
+    print(ingredients_list)
+       
+    cur.executemany("INSERT INTO ingredients (name,recipe_id) VALUES (?,?)" , ingredients_list)
+
+    con.commit()
+    con.close()
+    return "added"
 
 @app.route("/get_recipes")
 def get_recipes():

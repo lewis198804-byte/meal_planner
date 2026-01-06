@@ -93,6 +93,15 @@ def save_ai_recipe():
     rec_data = request.get_json()
     con = sqlite3.connect("database.db")
     cur = con.cursor()
+
+    error_text = ""
+    if rec_data["recipe_name"] == "" or rec_data['ingredients'] == "" or rec_data['location'] == "":
+        error_text = "Error: missing required field!" 
+
+    if error_text != "":
+         return jsonify({"ok": False, "error": error_text})
+
+    
     cur.execute("INSERT INTO recipes (name,location,page_nu,instructions,difficulty,photo_path) VALUES (?,?,?,?,?,?)" ,(rec_data['recipe_name'], rec_data['location'], rec_data['page_number'],rec_data['instructions'],rec_data['difficulty'],rec_data['recipe_photo']))
     
     recipe_id = cur.lastrowid
@@ -111,7 +120,7 @@ def save_ai_recipe():
 
     con.commit()
     con.close()
-    return "added"
+    return jsonify({"ok": True})
 
 @app.route("/get_recipes", methods=['POST'])
 def get_recipes():

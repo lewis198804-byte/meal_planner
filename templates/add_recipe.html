@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Bootstrap demo</title>
+    <title>PlatePlanner</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
   </head>
   <body>
@@ -48,6 +48,7 @@
     <section>
         
         <div class="container">
+            
             <div class="row justify-content-md-center ">
 
                 <div class="col col-12 col-md-6 ">
@@ -64,8 +65,8 @@
                                 </h2>
                                 <div id="collapseOne" class="accordion-collapse collapse show" data-bs-parent="#accordionExample">
                                 <div class="accordion-body">
-                                    <strong>These are the details detected in the image you uploaded.</strong> <br>
-                                    <small>Make changes if you want to adjust any of the strored values.</small>
+                                    <strong>These are the main recipe details</strong> <br>
+                                    <small>These fields are required to save the recipe!</small>
                                     <form id="recipe_details">
                                     <div class="mb-3 mt-3 mx-auto text-center" >
                                         <label class="form-label" for="recipe_name">Recipe Name</label>
@@ -99,7 +100,7 @@
                                 </h2>
                                 <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
                                 <div class="accordion-body">
-                                    <strong>Add additional details that may not have been detected by the AI agent.</strong> 
+                                    <strong>Add additional details that aren't required but are helpful! </strong> 
                                     <form id="additional_details"> <!-- UNIQUE FORM ID -->
                                     <div class="mb-3 mt-3 mx-auto text-center" >
                                         <label class="form-label" for="recipe_location">Recipe Location</label>
@@ -110,9 +111,9 @@
                                         <input type="text" class="form-control w-100" name="page_number" id="page_number">
                                     </div>
                                     <div class="mb-3 mx-auto text-center" >
-                                        <label for="range4" class="form-label">Difficulty</label>
-                                        <input type="range" class="form-range w-100" step="1" min="0" max="2" value="0" id="range4">
-                                        <output for="range4" id="rangeValue"></output>
+                                        <label for="difficulty_range" class="form-label">Difficulty</label>
+                                        <input type="range" class="form-range w-100" step="1" min="0" max="2" value="0" id="difficulty_range">
+                                        <output for="difficulty_range" id="rangeValue"></output>
                                     </div>
                                     <div class="mb-3 mx-auto text-center" >
                                         <label class="form-label" for="recipe_photo">Photo</label>
@@ -131,6 +132,10 @@
             <div class="row">
                 <div class="col col-12">
                     <div class=" text-center mt-3">
+                        <div class="spinner-border text-info" id="spinner" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <div class="alert alert-danger invisible" role="alert" id="error_field"> test error</div>
                         <p><button class="btn btn-primary mt-5" onclick='save_recipe()'>Save Recipe</button></p>
                     </div>
                 </div>
@@ -142,19 +147,19 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
     <script>
 
-
-        const name_field = document.getElementById("recipe_name")
-        const recipe_location = document.getElementById("recipe_location")
+        const error_field = document.getElementById("error_field");
+        const name_field = document.getElementById("recipe_name");
+        const recipe_location = document.getElementById("recipe_location");
         
-        const page_number = document.getElementById("page_number")
-        const instructions = document.getElementById("instructions")
-        const ingredients = document.getElementById("ingredients")
+        const page_number = document.getElementById("page_number");
+        const instructions = document.getElementById("instructions");
+        const ingredients = document.getElementById("ingredients");
         
-        const recipe_photo = document.getElementById("recipe_photo")
+        const recipe_photo = document.getElementById("recipe_photo");
 
 
 
-        const rangeInput = document.getElementById('range4');
+        const rangeInput = document.getElementById('difficulty_range');
         const rangeOutput = document.getElementById('rangeValue');
 
         const spinner_div = document.getElementById('spinner');
@@ -182,6 +187,7 @@
         
 
         async function save_recipe(){
+            toggleAlert("off")
             const response = await fetch("/save_ai_recipe", {
                 method: 'POST',
                 headers: {
@@ -190,9 +196,28 @@
                 body: JSON.stringify({'recipe_name': name_field.value, 'location': recipe_location.value, 'page_number': page_number.value, 'instructions': instructions.value, 'ingredients': ingredients.value, 'difficulty': difficulty_text,'recipe_photo': recipe_photo.value })
             })
 
-            const insert_response = await response
+            const insert_response = await response.json();
             if (insert_response.ok){
+               
+                
                 console.log("recipe saved successfully")
+            }
+            else {
+                console.log("error thing")
+                console.log(insert_response.error)
+                error_field.innerHTML =insert_response.error
+                toggleAlert("on")
+            }
+        }
+
+        function toggleAlert(state){
+                if (state == "on"){
+                error_field.classList.remove("invisible")
+                error_field.classList.add("visible")
+            }
+            else {
+                error_field.classList.remove("visible")
+                error_field.classList.add("invisible")
             }
         }
     </script>

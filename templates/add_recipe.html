@@ -60,23 +60,22 @@
                                 <button class="accordion-button " type="button" 
                                         data-bs-toggle="collapse" data-bs-target="#collapseOne" 
                                         aria-expanded="true" aria-controls="collapseOne">
-                                    Main details
+                                    Required details
                                 </button>
                                 </h2>
                                 <div id="collapseOne" class="accordion-collapse collapse show" data-bs-parent="#accordionExample">
                                 <div class="accordion-body">
-                                    <strong>These are the main recipe details</strong> <br>
+                                    <strong>These are the details required to save your recipe</strong> <br>
                                     <small>These fields are required to save the recipe!</small>
                                     <form id="recipe_details">
                                     <div class="mb-3 mt-3 mx-auto text-center" >
                                         <label class="form-label" for="recipe_name">Recipe Name</label>
                                         <input type="text" class="form-control w-100" name="recipe_name" id="recipe_name">
                                     </div>
-                                    <div class="mb-3 mx-auto text-center">
-                                        <label class="form-label" for="instructions">Instructions</label>
-                                        <textarea class="form-control w-100" style="height:10em; width:20em" 
-                                                name="instructions" id="instructions" aria-describedby="instructions-help"></textarea>
-                                        <div id="instructions-help" class="form-text">instructions from the recipe</div>
+                                    
+                                    <div class="mb-3 mt-3 mx-auto text-center" >
+                                        <label class="form-label" for="recipe_location">Recipe Location</label>
+                                        <input type="text" class="form-control w-100" name="where" id="recipe_location">
                                     </div>
                                     <div class="mb-3 mx-auto text-center">
                                         <label class="form-label" for="ingredients">Ingredients</label>
@@ -102,9 +101,11 @@
                                 <div class="accordion-body">
                                     <strong>Add additional details that aren't required but are helpful! </strong> 
                                     <form id="additional_details"> <!-- UNIQUE FORM ID -->
-                                    <div class="mb-3 mt-3 mx-auto text-center" >
-                                        <label class="form-label" for="recipe_location">Recipe Location</label>
-                                        <input type="text" class="form-control w-100" name="where" id="recipe_location">
+                                    <div class="mb-3 mx-auto text-center">
+                                        <label class="form-label" for="instructions">Instructions</label>
+                                        <textarea class="form-control w-100" style="height:10em; width:20em" 
+                                                name="instructions" id="instructions" aria-describedby="instructions-help"></textarea>
+                                        <div id="instructions-help" class="form-text">instructions from the recipe</div>
                                     </div>
                                     <div class="mb-3 mx-auto text-center" >
                                         <label class="form-label" for="page_number">Page Number?</label>
@@ -135,8 +136,8 @@
                         <div class="spinner-border text-info" id="spinner" role="status">
                                 <span class="visually-hidden">Loading...</span>
                         </div>
-                        <div class="alert alert-danger invisible" role="alert" id="error_field"> test error</div>
-                        <p><button class="btn btn-primary mt-5" onclick='save_recipe()'>Save Recipe</button></p>
+                        <div class="alert invisible" role="alert" id="alert_field"></div>
+                        <p><button id="save_button" class="btn btn-primary mt-5" onclick='save_recipe()'>Save Recipe</button></p>
                     </div>
                 </div>
             </div>
@@ -147,27 +148,32 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
     <script>
 
-        const error_field = document.getElementById("error_field");
-        const name_field = document.getElementById("recipe_name");
-        const recipe_location = document.getElementById("recipe_location");
-        
+        let recipe_name_field = "";
+        let location_field = "";
+        let ingredients_field = "";
+        const alert_field = document.getElementById("alert_field");
+                
         const page_number = document.getElementById("page_number");
         const instructions = document.getElementById("instructions");
-        const ingredients = document.getElementById("ingredients");
-        
+        const ingredients = document.getElementById("ingredients")
+        ingredients.addEventListener("change", function(){ingredients_field = ingredients.value;checkRequired()})
+        const name_field = document.getElementById("recipe_name")
+        name_field.addEventListener("change", function(){recipe_name_field = name_field.value;checkRequired()})
+        const recipe_location = document.getElementById("recipe_location")
+        recipe_location.addEventListener("change", function(){location_field = recipe_location.value;checkRequired()})
+
         const recipe_photo = document.getElementById("recipe_photo");
-
-
-
         const rangeInput = document.getElementById('difficulty_range');
         const rangeOutput = document.getElementById('rangeValue');
 
         const spinner_div = document.getElementById('spinner');
+        const save_button = document.getElementById('save_button')
        
-
-
+        
+        save_button.disabled = true;
         spinner_div.hidden = true;
-        // Set initial value
+
+
         rangeOutput.textContent = "Easy";
         let difficulty_text = "Easy"
         rangeInput.addEventListener('input', function() {
@@ -183,11 +189,18 @@
             rangeOutput.textContent = difficulty_text;
         });
 
-
+        function checkRequired(){
+            if (recipe_name_field != "" & location_field != "" & ingredients_field != ""){
+                save_button.disabled = false;
+            }
+            else{
+                save_button.disabled = true;
+            }
+        }
         
 
         async function save_recipe(){
-            toggleAlert("off")
+            toggleErrorAlert("off")
             const response = await fetch("/save_ai_recipe", {
                 method: 'POST',
                 headers: {
@@ -199,25 +212,42 @@
             const insert_response = await response.json();
             if (insert_response.ok){
                
-                
+                alert_field.innerHTML = insert_response.success
+                toggleSuccessAlert("on")
                 console.log("recipe saved successfully")
             }
             else {
-                console.log("error thing")
-                console.log(insert_response.error)
-                error_field.innerHTML =insert_response.error
-                toggleAlert("on")
+                alert_field.innerHTML = insert_response.error
+                toggleErrorAlert("on")
             }
         }
 
-        function toggleAlert(state){
+        function toggleErrorAlert(state){
                 if (state == "on"){
-                error_field.classList.remove("invisible")
-                error_field.classList.add("visible")
+                    if (alert_field.classList.contains("alert-success")){
+                        alert_field.classList.remove("alert-success") 
+                    }
+                alert_field.classList.add("alert-danger")
+                alert_field.classList.remove("invisible")
+                alert_field.classList.add("visible")
             }
             else {
-                error_field.classList.remove("visible")
-                error_field.classList.add("invisible")
+                alert_field.classList.remove("visible")
+                alert_field.classList.add("invisible")
+            }
+        }
+        function toggleSuccessAlert(state){
+                if (state == "on"){
+                    if (alert_field.classList.contains("alert-danger")){
+                        alert_field.classList.remove("alert-danger")
+                    }
+                alert_field.classList.add("alert-success")
+                alert_field.classList.remove("invisible")
+                alert_field.classList.add("visible")
+            }
+            else {
+                alert_field.classList.remove("visible")
+                alert_field.classList.add("invisible")
             }
         }
     </script>

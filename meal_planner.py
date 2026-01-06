@@ -120,7 +120,7 @@ def save_ai_recipe():
 
     con.commit()
     con.close()
-    return jsonify({"ok": True})
+    return jsonify({"ok": True, "success": "Recipe added succesfully!"})
 
 @app.route("/get_recipes", methods=['POST'])
 def get_recipes():

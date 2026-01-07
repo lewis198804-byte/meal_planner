@@ -142,6 +142,20 @@ def delete_recipe(recipe_id):
     con.close()
     return "deleted"
 
+@app.route("/view_recipe/<recipe_id>")
+def view_recipe(recipe_id):
+    print(recipe_id)
+    con = sqlite3.connect("database.db")
+    con.row_factory = sqlite3.Row
+    cur = con.cursor()
+    cur.execute("SELECT * FROM recipes WHERE id = ?", (recipe_id,))
+    recipe_response = cur.fetchone()
+    cur.execute("SELECT * FROM ingredients WHERE recipe_id = ?", (recipe_id,))
+    ingredients_response = cur.fetchall()
+    con.close()
+    return render_template("view_recipe.html", recipe_details = recipe_response,recipe_ingredients = ingredients_response)
+
+
 
 @app.route('/analyze-recipe', methods=['POST'])
 def analyze_recipe():

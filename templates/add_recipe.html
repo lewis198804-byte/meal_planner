@@ -76,12 +76,14 @@
                                     <div class="mb-3 mt-3 mx-auto text-center" >
                                         <label class="form-label" for="recipe_location">Recipe Location</label>
                                         <input type="text" class="form-control w-100" name="where" id="recipe_location">
+                                    <div id="location-help" class="form-text">Name of the recipe book or website. </div>
+
                                     </div>
                                     <div class="mb-3 mx-auto text-center">
                                         <label class="form-label" for="ingredients">Ingredients</label>
-                                        <textarea class="form-control w-100" style="height:10em;" 
+                                        <textarea class=" form-control w-100" style="height:10em;" 
                                                 name="ingredients" id="ingredients" aria-describedby="ingredients-help"></textarea>
-                                        <div id="ingredients-help" class="form-text">Ingredients detected from supplied recipe image.</div>
+                                        <div id="ingredients-help" class="form-text">Ingredients in a comma seperated list.</div>
                                     </div>
                                     </form> <!-- FORM 1 CLOSED -->
                                 </div> <!-- ACCORDION-BODY 1 CLOSED -->
@@ -156,11 +158,11 @@
         const page_number = document.getElementById("page_number");
         const instructions = document.getElementById("instructions");
         const ingredients = document.getElementById("ingredients")
-        ingredients.addEventListener("change", function(){ingredients_field = ingredients.value;checkRequired()})
+        ingredients.addEventListener("change", function(){ingredients_field = ingredients.value;checkRequired();setFieldColour(ingredients)})
         const name_field = document.getElementById("recipe_name")
-        name_field.addEventListener("change", function(){recipe_name_field = name_field.value;checkRequired()})
+        name_field.addEventListener("change", function(){recipe_name_field = name_field.value;checkRequired(),setFieldColour(name_field)})
         const recipe_location = document.getElementById("recipe_location")
-        recipe_location.addEventListener("change", function(){location_field = recipe_location.value;checkRequired()})
+        recipe_location.addEventListener("change", function(){location_field = recipe_location.value;checkRequired(),setFieldColour(recipe_location)})
 
         const recipe_photo = document.getElementById("recipe_photo");
         const rangeInput = document.getElementById('difficulty_range');
@@ -172,7 +174,6 @@
         
         save_button.disabled = true;
         spinner_div.hidden = true;
-
 
         rangeOutput.textContent = "Easy";
         let difficulty_text = "Easy"
@@ -189,6 +190,15 @@
             rangeOutput.textContent = difficulty_text;
         });
 
+        function setFieldColour(field){
+            if(field.value != ""){
+                field.classList.add("bg-success-subtle")
+            } else if (field.value == ""){
+                if (field.classList.contains("bg-success-subtle")){
+                    field.classList.remove("bg-success-subtle")
+                }
+            }
+        }
         function checkRequired(){
             if (recipe_name_field != "" & location_field != "" & ingredients_field != ""){
                 save_button.disabled = false;

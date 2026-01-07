@@ -54,7 +54,7 @@
                         <form method="POST" enctype="multipart/form-data" id="ai_form">
                         <div class="mb-3 mx-auto" style="width:20em">
                                 <label for="photo" class="form-label">photo</label>
-                                <input type="file" required class="form-control" id="image" name="image">
+                                <input type="file" required class="form-control" id="photo" name="image">
                             </div>
                             <div class="spinner-border text-info" id="spinner" role="status">
                                 <span class="visually-hidden">Loading...</span>
@@ -106,11 +106,9 @@
                                         <label class="form-label" for="recipe_name">Recipe Name</label>
                                         <input type="text" class="form-control w-100" name="recipe_name" id="recipe_name">
                                     </div>
-                                    <div class="mb-3 mx-auto text-center">
-                                        <label class="form-label" for="instructions">Instructions</label>
-                                        <textarea class="form-control w-100" style="height:10em; width:20em" 
-                                                name="instructions" id="instructions" aria-describedby="instructions-help"></textarea>
-                                        <div id="instructions-help" class="form-text">instructions from the recipe</div>
+                                    <div class="mb-3 mt-3 mx-auto text-center" >
+                                        <label class="form-label" for="recipe_location">Recipe Location</label>
+                                        <input type="text" class="form-control w-100" name="where" id="recipe_location">
                                     </div>
                                     <div class="mb-3 mx-auto text-center">
                                         <label class="form-label" for="ingredients">Ingredients</label>
@@ -136,18 +134,21 @@
                                 <div class="accordion-body">
                                     <strong>Add additional details that may not have been detected by the AI agent.</strong> 
                                     <form id="additional_details"> <!-- UNIQUE FORM ID -->
-                                    <div class="mb-3 mt-3 mx-auto text-center" >
-                                        <label class="form-label" for="recipe_location">Recipe Location</label>
-                                        <input type="text" class="form-control w-100" name="where" id="recipe_location">
+                                    
+                                    <div class="mb-3 mx-auto text-center">
+                                        <label class="form-label" for="instructions">Instructions</label>
+                                        <textarea class="form-control w-100" style="height:10em; width:20em" 
+                                                name="instructions" id="instructions" aria-describedby="instructions-help"></textarea>
+                                        <div id="instructions-help" class="form-text">instructions from the recipe</div>
                                     </div>
                                     <div class="mb-3 mx-auto text-center" >
                                         <label class="form-label" for="page_number">Page Number?</label>
                                         <input type="text" class="form-control w-100" name="page_number" id="page_number">
                                     </div>
                                     <div class="mb-3 mx-auto text-center" >
-                                        <label for="range4" class="form-label">Difficulty</label>
-                                        <input type="range" class="form-range w-100" step="1" min="0" max="2" value="0" id="range4">
-                                        <output for="range4" id="rangeValue"></output>
+                                        <label for="difficulty_range" class="form-label">Difficulty</label>
+                                        <input type="range" class="form-range w-100" step="1" min="0" max="2" value="0" id="difficulty_range">
+                                        <output for="difficulty_range" id="rangeValue"></output>
                                     </div>
                                     <div class="mb-3 mx-auto text-center" >
                                         <label class="form-label" for="recipe_photo">Photo</label>
@@ -166,7 +167,8 @@
             <div class="row">
                 <div class="col col-12">
                     <div class=" text-center mt-3">
-                        <p><button class="btn btn-primary mt-5" onclick='save_recipe()'>Save Recipe</button></p>
+                        <div class="alert invisible" role="alert" id="alert_field"></div>
+                        <p><button id="save_button" class="btn btn-primary mt-5" onclick='save_recipe()'>Save Recipe</button></p>
                     </div>
                 </div>
             </div>
@@ -177,32 +179,28 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
     <script>
 
+        const alert_field = document.getElementById("alert_field");
         const form = document.getElementById("ai_form");
-
-        const name_field = document.getElementById("recipe_name")
-        const recipe_location = document.getElementById("recipe_location")
-        const recipe_difficulty = document.getElementById("recipe_difficulty")
-        const page_number = document.getElementById("page_number")
-        const instructions = document.getElementById("instructions")
+        const page_number = document.getElementById("page_number");
+        const instructions = document.getElementById("instructions");
         const ingredients = document.getElementById("ingredients")
-        const easy_dif = document.getElementById("easy_difficulty")
-        const med_dif = document.getElementById("med_difficulty")
-        const hard_dif = document.getElementById("hard_difficulty")
-        const recipe_name_header = document.getElementById("recipe_name_h1")
-        const recipe_photo = document.getElementById("recipe_photo")
-
-        const ingredients_list = document.getElementById("ingredients_list")
-        const instructions_list = document.getElementById("instructions_list")
-
-        const rangeInput = document.getElementById('range4');
+        ingredients.addEventListener("change", function(){checkRequired();setFieldColour(ingredients)})
+        const name_field = document.getElementById("recipe_name")
+        name_field.addEventListener("change", function(){checkRequired(),setFieldColour(name_field)})
+        const recipe_location = document.getElementById("recipe_location")
+        recipe_location.addEventListener("change", function(){checkRequired(),setFieldColour(recipe_location)})
+        recipe_name_header = document.getElementById("recipe_name_h1")
+        const recipe_photo = document.getElementById("recipe_photo");
+        const rangeInput = document.getElementById('difficulty_range');
         const rangeOutput = document.getElementById('rangeValue');
 
         const spinner_div = document.getElementById('spinner');
-        const ai_submit_button = document.getElementById("ai_submit_button")
-
-
+        const save_button = document.getElementById('save_button')
+       
+        
+        save_button.disabled = true;
         spinner_div.hidden = true;
-        // Set initial value
+
         rangeOutput.textContent = "Easy";
         let difficulty_text = "Easy"
         rangeInput.addEventListener('input', function() {
@@ -218,7 +216,23 @@
             rangeOutput.textContent = difficulty_text;
         });
 
-
+        function setFieldColour(field){
+            if(field.value != ""){
+                field.classList.add("bg-success-subtle")
+            } else if (field.value == ""){
+                if (field.classList.contains("bg-success-subtle")){
+                    field.classList.remove("bg-success-subtle")
+                }
+            }
+        }
+        function checkRequired(){
+            if (name_field.value != "" & recipe_location.value != "" & ingredients.value != ""){
+                save_button.disabled = false;
+            }
+            else{
+                save_button.disabled = true;
+            }
+        }
         async function submitToAi(){
             const formData = new FormData(form)
             spinner_div.hidden = false;
@@ -235,7 +249,13 @@
             //console.log(recipe)
 
             name_field.value = recipe.recipe_name
+            if (recipe.recipe_name != ""){
+                name_field.classList.add("bg-success-subtle")
+            }
             ingredients.value = recipe.ingredients
+            if (ingredients.value != ""){
+                ingredients.classList.add("bg-success-subtle")
+            }
             instructions.value = recipe.instructions
 
             recipe.ingredients.forEach(element => {
@@ -253,9 +273,11 @@
             recipe_name_header.innerHTML = recipe.recipe_name
             spinner_div.hidden = true;
             ai_submit_button.disabled = false;
+            checkRequired()
         }
 
         async function save_recipe(){
+            toggleErrorAlert("off")
             const response = await fetch("/save_ai_recipe", {
                 method: 'POST',
                 headers: {
@@ -264,12 +286,47 @@
                 body: JSON.stringify({'recipe_name': name_field.value, 'location': recipe_location.value, 'page_number': page_number.value, 'instructions': instructions.value, 'ingredients': ingredients.value, 'difficulty': difficulty_text,'recipe_photo': recipe_photo.value })
             })
 
-            const insert_response = await response
+            const insert_response = await response.json();
             if (insert_response.ok){
+               
+                alert_field.innerHTML = insert_response.success
+                toggleSuccessAlert("on")
                 console.log("recipe saved successfully")
+            }
+            else {
+                alert_field.innerHTML = insert_response.error
+                toggleErrorAlert("on")
+            }
+        }
+
+        function toggleErrorAlert(state){
+                if (state == "on"){
+                    if (alert_field.classList.contains("alert-success")){
+                        alert_field.classList.remove("alert-success") 
+                    }
+                alert_field.classList.add("alert-danger")
+                alert_field.classList.remove("invisible")
+                alert_field.classList.add("visible")
+            }
+            else {
+                alert_field.classList.remove("visible")
+                alert_field.classList.add("invisible")
+            }
+        }
+        function toggleSuccessAlert(state){
+                if (state == "on"){
+                    if (alert_field.classList.contains("alert-danger")){
+                        alert_field.classList.remove("alert-danger")
+                    }
+                alert_field.classList.add("alert-success")
+                alert_field.classList.remove("invisible")
+                alert_field.classList.add("visible")
+            }
+            else {
+                alert_field.classList.remove("visible")
+                alert_field.classList.add("invisible")
             }
         }
     </script>
-
     </body>
 </html>

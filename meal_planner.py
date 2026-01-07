@@ -1,10 +1,14 @@
 from flask import Flask, render_template, request, jsonify
+from werkzeug.utils import secure_filename
 import sqlite3
 import requests
 import base64
 import json
 from dotenv import load_dotenv
 import os
+import uuid
+
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 load_dotenv()
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
@@ -14,6 +18,11 @@ def database_con(query):
     con = sqlite3.connect("database.db")
     cur = con.cursor()
     return cur.execute(query)
+
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @app.route("/")
 def home():
@@ -90,22 +99,38 @@ def recipe_save():
 
 @app.route("/save_ai_recipe", methods=['POST'])
 def save_ai_recipe():
-    rec_data = request.get_json()
+    name = request.form['recipe_name']
+    location = request.form['recipe_location']
+    page = request.form['page_number']
+    instructions = request.form['instructions']
+    ingredients = request.form['ingredients']
+    difficulty = request.form['difficulty']
     con = sqlite3.connect("database.db")
     cur = con.cursor()
 
     error_text = ""
-    if rec_data["recipe_name"] == "" or rec_data['ingredients'] == "" or rec_data['location'] == "":
+    if name == "" or ingredients == "" or location == "":
         error_text = "Error: missing required field!" 
 
+    photo = request.files.get('recipe_photo')
+    if photo and photo.filename:  # Real file check
+        safe_name = secure_filename(photo.filename)  
+        # 2. Add unique ID BEFORE
+        unique_id = str(uuid.uuid4()).replace('-', '')[:8]
+        filename = f"{unique_id}_{safe_name}"  # "a1b2c3d4_recipe.jpg"
+        image_filename = filename
+        photo.save(f"static/recipe_images/{filename}")
+    else:
+        image_filename = None  # Or default image
+    
     if error_text != "":
          return jsonify({"ok": False, "error": error_text})
 
     
-    cur.execute("INSERT INTO recipes (name,location,page_nu,instructions,difficulty,photo_path) VALUES (?,?,?,?,?,?)" ,(rec_data['recipe_name'], rec_data['location'], rec_data['page_number'],rec_data['instructions'],rec_data['difficulty'],rec_data['recipe_photo']))
+    cur.execute("INSERT INTO recipes (name,location,page_nu,instructions,difficulty,photo_path) VALUES (?,?,?,?,?,?)" ,(name, location, page,instructions,difficulty,image_filename))
     
     recipe_id = cur.lastrowid
-    ingredients_strings = rec_data['ingredients'].split(",")
+    ingredients_strings = ingredients.split(",")
     ingredients_list = []
     
     for item in ingredients_strings:
@@ -136,8 +161,8 @@ def get_recipes():
 def delete_recipe(recipe_id):
     con = sqlite3.connect("database.db")
     cur = con.cursor()
-    cur.execute("DELETE FROM recipes WHERE id = ?", (recipe_id))
-    cur.execute("DELETE FROM ingredients WHERE recipe_id = ?",(recipe_id))
+    cur.execute("DELETE FROM recipes WHERE id = ?", (recipe_id,))
+    cur.execute("DELETE FROM ingredients WHERE recipe_id = ?",(recipe_id,))
     con.commit()
     con.close()
     return "deleted"
@@ -179,6 +204,7 @@ def analyze_recipe():
                 {'type': 'text', 'text': '''
                     Analyze this recipe photo. Extract as RAW JSON only with no formatting. 
                     When describing the ingredients do not use commas within a single ingredient description as the ingredients will be split using comma as a seperator. 
+                    When describing the instruction steps use a full stop to seperate the different steps. DO NOT use any commas. String will be split using the full stop as a serperator. 
                     Any temperatures should be in celcius as i live in the UK. 
                     Output will be read by python program:
                     {

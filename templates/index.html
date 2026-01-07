@@ -48,6 +48,19 @@
     </section>
     <section>
         <div class="container">
+          <div class="row" >
+            <div class="col">
+              <div class="card mb-5"  >
+                <div class="d-flex justify-content-center align-items-center" style="height: 50vh;">
+                  <div class="text-center">
+                    <h5>No Meal Plan selected</h5>
+                    <a href=""> <small>Choose one here.</small></a>
+                  </div>
+                </div>
+                
+              </div>
+            </div>
+          </div>
           <div class="row row-cols-1 row-cols-sm-2 row-cols-md-5 justify-content-md-center " id="recipe_showcase">
           
 
@@ -83,14 +96,13 @@
                 recipes.forEach(element => {
                     contents += '\
                     <div class="col">\
-                      <div class="card">\
-                        <img src="/static/recipe_images/testimage.jpg" class="card-img-top" alt="...">\
+                      <div class="card ">\
+                        <img src="/static/recipe_images/'+element[5]+'" class="card-img-top img-thumbnail" style="height: 200px; object-fit: cover;" alt="...">\
                         <div class="card-body">\
-                          <h5 class="card-title">Monday</h5>\
-                          <p><small>'+element[1]+'</small></p>\
+                          <h5>'+element[1]+'</small></h5>\
                           <p>'+element[2] + '. Pg:'+element[3]+'</p>\
                           <a href="/view_recipe/'+element[0]+'" class="btn btn-primary">View Recipe</a><br>\
-                          <small><a href="#" class="card-link">Change Recipe</a></small>\
+                          <small><a href="" class="card-link" onclick="deleteRecipe('+element[0]+')">Delete Recipe</a></small>\
                         </div>\
                       </div>\
                     </div>\

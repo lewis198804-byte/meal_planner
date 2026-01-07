@@ -48,51 +48,87 @@
     </section>
     <section>
         <div class="container">
-            <div class="row" id="s">
-                <div class="col-12 col-md-6">
+            <div class="row">
+                <div class="col-12">
+                    <div>
+                        <nav aria-label="breadcrumb">
+                            <ol class="breadcrumb">
+                                <li class="breadcrumb-item"><a href="/recipes">Recipes</a></li>
+                                <li class="breadcrumb-item active" aria-current="page">{{recipe_details['name']}}</li>
+                            </ol>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+            <div class="row" id="">
+                <div class="col-12 ">
                     <div class="">
                         <p style="font-size:3em;font-weight:bold">{{recipe_details['name']}} <span style="font-size:1rem;" class="badge text-bg-secondary bg-success">{{recipe_details['difficulty']}}</span></p>
-                        <p class="lead">{{recipe_details['location'] | capitalize}}</p>
+                        <p class="lead">
+                            {{recipe_details['location'] | capitalize}} 
+                            {% if recipe_details['page_nu'] != "" %}
+                                 - Pg {{recipe_details['page_nu']}} 
+                            {% endif %}
+                        </p>
                     </div>
                 </div>
             </div>
             <div class="row mb-5" id="">
                 <div class="col-12 col-md-6">
-                    <div class="">
-                        <img src="/static/recipe_images/testimage.jpg" class="img-fluid" alt="...">
+                    <div class="text-center">
+                        <img src="/static/recipe_images/{{recipe_details['photo_path']}}" class="img-fluid rounded-4 border border-5" alt="...">
                     </div>
                 </div>
                 <div class="col-12 col-md-6">
-                    <div class="">
-                        <h1><u>Ingredients</u></h1>
-                        <ul class="list-group">
-                            {% for ingredient in recipe_ingredients %}
-                                <li class="list-group-item" style="font-size:1em;font-weight:bold">{{ ingredient['name'] | capitalize}} </li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-                </div>
-            </div>
-            <div class="row mb-5" id="">
-                <div class="col-12 col-md-10">
-                    <div class="card">
-                        {% if recipe_details['instructions'] != "" %}
-                            {% set instruction_list = recipe_details['instructions'].split(".") %}
-                            <h1>Instructions:</h1>
-                            <ul class="list-group-numbered">
-                                {% for instruction in instruction_list %}
-                                    {% if instruction != "" %}
-                                        <li class="list-group-item" style="font-size:1em;font-weight:bold">{{instruction}}</li>
+                    <div class="accordion accordion-flush" id="accordionFlushExample">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseOne" aria-expanded="false" aria-controls="flush-collapseOne">
+                                <h4>Ingredients</h4>
+                            </button>
+                            </h2>
+                            <div id="flush-collapseOne" class="accordion-collapse collapse" data-bs-parent="#accordionFlushExample">
+                                <div class="accordion-body">
+
+                                    <ul class="list-group">
+                                        {% for ingredient in recipe_ingredients %}
+                                            <li class="list-group-item" style="font-size:1em;font-weight:bold">{{ ingredient['name'] | capitalize}} </li>
+                                        {% endfor %}
+                                    </ul>
+
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseTwo" aria-expanded="false" aria-controls="flush-collapseTwo">
+                                <h4>Instructions </h4>
+                            </button>
+                            </h2>
+                            <div id="flush-collapseTwo" class="accordion-collapse collapse" data-bs-parent="#accordionFlushExample">
+                                <div class="accordion-body">
+
+                                    {% if recipe_details['instructions'] != "" %}
+                                        {% set instruction_list = recipe_details['instructions'].split(".") %}
+                                        <ul class="list-group list-group-numbered">
+                                            {% for instruction in instruction_list %}
+                                                {% if instruction != "" %}
+                                                    <li class="list-group-item" style="font-size:1em;font-weight:bold">{{instruction}}</li>
+                                                {% endif %}
+                                                {% endfor %}
+                                        </ul>
+                                    {% else %}
+                                        <p>No Instructions</p>
                                     {% endif %}
-                                    {% endfor %}
-                            </ul>
-                        {% else %}
-                            <p>No Instructions</p>
-                        {% endif %}
-                        
+
+                                </div>
+                            </div>
+                        </div>
+                
                     </div>
                 </div>
             </div>
+         
         </div>
           
     </section>

@@ -50,17 +50,15 @@
         <div class="container">
             <div class="row">
                 <div class="col col-12">
-                    <div class="card text-center mt-5 mx-auto">
+                    <div class="card text-center mt-3">
                         <form method="POST" enctype="multipart/form-data" id="ai_form">
                         <div class="mb-3 mx-auto" style="width:20em">
-                                <label for="photo" class="form-label">photo</label>
-                                <input type="file" required class="form-control" id="photo" name="image">
+                                <label for="photo" class="form-label">Select a photo to analyze with AI.</label>
+                                <input type="file" required class="form-control" id="ai_photo" name="image">
                             </div>
                             <div class="spinner-border text-info" id="spinner" role="status">
                                 <span class="visually-hidden">Loading...</span>
                             </div>
-                                            
-                            
                         </form>
                         <p><button onclick="submitToAi()" id="ai_submit_button" class="btn btn-primary">Submit</button></p>
                     </div>
@@ -116,6 +114,10 @@
                                                 name="ingredients" id="ingredients" aria-describedby="ingredients-help"></textarea>
                                         <div id="ingredients-help" class="form-text">Ingredients detected from supplied recipe image.</div>
                                     </div>
+                                    <div class="mb-3 mx-auto text-center" >
+                                        <label class="form-label" for="recipe_photo">Photo</label>
+                                        <input type="file" class="form-control w-100" name="recipe_photo" id="recipe_photo">
+                                    </div>
                                     </form> <!-- FORM 1 CLOSED -->
                                 </div> <!-- ACCORDION-BODY 1 CLOSED -->
                                 </div> <!-- COLLAPSE 1 CLOSED -->
@@ -150,10 +152,7 @@
                                         <input type="range" class="form-range w-100" step="1" min="0" max="2" value="0" id="difficulty_range">
                                         <output for="difficulty_range" id="rangeValue"></output>
                                     </div>
-                                    <div class="mb-3 mx-auto text-center" >
-                                        <label class="form-label" for="recipe_photo">Photo</label>
-                                        <input type="file" class="form-control w-100" name="recipe_photo" id="recipe_photo">
-                                    </div>
+                                    
                                     </form> <!-- FORM 2 CLOSED -->
                                 </div> <!-- ACCORDION-BODY 2 CLOSED -->
                                 </div> <!-- COLLAPSE 2 CLOSED -->
@@ -180,7 +179,7 @@
     <script>
 
         const alert_field = document.getElementById("alert_field");
-        const form = document.getElementById("ai_form");
+        const ai_form = document.getElementById("ai_form");
         const page_number = document.getElementById("page_number");
         const instructions = document.getElementById("instructions");
         const ingredients = document.getElementById("ingredients")
@@ -196,7 +195,6 @@
 
         const spinner_div = document.getElementById('spinner');
         const save_button = document.getElementById('save_button')
-       
         
         save_button.disabled = true;
         spinner_div.hidden = true;
@@ -234,7 +232,7 @@
             }
         }
         async function submitToAi(){
-            const formData = new FormData(form)
+            const formData = new FormData(ai_form)
             spinner_div.hidden = false;
             ai_submit_button.disabled = true;
             let ingredients_list_items = ""
@@ -262,6 +260,8 @@
                 ingredients_list_items += "<li class='list-group-item'>"+element+"</li>"
             });
 
+            page_number.value = recipe.page_number
+
             ingredients_list.innerHTML = ingredients_list_items
 
             recipe.instructions.forEach(element => {
@@ -278,12 +278,20 @@
 
         async function save_recipe(){
             toggleErrorAlert("off")
+            const formData = new FormData();
+            
+            formData.append("recipe_name", name_field.value);
+            formData.append("recipe_location", recipe_location.value);
+            formData.append("page_number", page_number.value);
+            formData.append("instructions", instructions.value);
+            formData.append("ingredients", ingredients.value);
+            formData.append("difficulty", difficulty_text);
+            formData.append("recipe_photo", recipe_photo.files[0]);
+            
+            console.log(formData)
             const response = await fetch("/save_ai_recipe", {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({'recipe_name': name_field.value, 'location': recipe_location.value, 'page_number': page_number.value, 'instructions': instructions.value, 'ingredients': ingredients.value, 'difficulty': difficulty_text,'recipe_photo': recipe_photo.value })
+                body: formData
             })
 
             const insert_response = await response.json();

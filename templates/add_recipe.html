@@ -52,7 +52,7 @@
             <div class="row justify-content-md-center ">
 
                 <div class="col col-12 col-md-6 ">
-                    <div class="card mt-5">
+                    <div class="card mt-2">
                         <div class="accordion" id="accordionExample">
                             <!-- FIRST ITEM -->
                             <div class="accordion-item">
@@ -84,6 +84,10 @@
                                         <textarea class=" form-control w-100" style="height:10em;" 
                                                 name="ingredients" id="ingredients" aria-describedby="ingredients-help"></textarea>
                                         <div id="ingredients-help" class="form-text">Ingredients in a comma seperated list.</div>
+                                    </div>
+                                    <div class="mb-3 mx-auto text-center" >
+                                        <label class="form-label" for="recipe_photo">Photo</label>
+                                        <input type="file" class="form-control w-100" name="recipe_photo" id="recipe_photo">
                                     </div>
                                     </form> <!-- FORM 1 CLOSED -->
                                 </div> <!-- ACCORDION-BODY 1 CLOSED -->
@@ -118,10 +122,7 @@
                                         <input type="range" class="form-range w-100" step="1" min="0" max="2" value="0" id="difficulty_range">
                                         <output for="difficulty_range" id="rangeValue"></output>
                                     </div>
-                                    <div class="mb-3 mx-auto text-center" >
-                                        <label class="form-label" for="recipe_photo">Photo</label>
-                                        <input type="file" class="form-control w-100" name="recipe_photo" id="recipe_photo">
-                                    </div>
+                                    
                                     </form> <!-- FORM 2 CLOSED -->
                                 </div> <!-- ACCORDION-BODY 2 CLOSED -->
                                 </div> <!-- COLLAPSE 2 CLOSED -->
@@ -211,12 +212,20 @@
 
         async function save_recipe(){
             toggleErrorAlert("off")
+            const formData = new FormData();
+            
+            formData.append("recipe_name", name_field.value);
+            formData.append("recipe_location", recipe_location.value);
+            formData.append("page_number", page_number.value);
+            formData.append("instructions", instructions.value);
+            formData.append("ingredients", ingredients.value);
+            formData.append("difficulty", difficulty_text);
+            formData.append("recipe_photo", recipe_photo.files[0]);
+            
+            console.log(formData)
             const response = await fetch("/save_ai_recipe", {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({'recipe_name': name_field.value, 'location': recipe_location.value, 'page_number': page_number.value, 'instructions': instructions.value, 'ingredients': ingredients.value, 'difficulty': difficulty_text,'recipe_photo': recipe_photo.value })
+                body: formData
             })
 
             const insert_response = await response.json();

@@ -47,75 +47,128 @@
         </header>
     </section>
     <section>
-        <div class="container">
-          <div class="row" >
-            <div class="col">
-              <div class="card mb-5"  >
-                <div class="d-flex justify-content-center align-items-center" style="height: 50vh;">
-                  <div class="text-center">
-                    <h5>No Meal Plan selected</h5>
-                    <a href=""> <small>Choose one here.</small></a>
-                  </div>
-                </div>
+        <div class="container" >
+                    <div class=" text-left row-cols-12 justify-content-md-center" > <h1>This Week</h1> </div>
+          <div class="row row-cols-2 row-cols-md-3 justify-content-center" id="meal_plan_showcase">
+
+          </div>
+        </div>
+
+        <div class="modal fade " id="changeRecipeModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+          
+          <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content">
+              
+              <div class="modal-header">
+                <h1 class="modal-title fs-5" id="staticBackdropLabel">Recipe Search</h1>
                 
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="p-3">
+                <div class="form-floating mb-3">
+                  <input type="email" class="form-control" id="floatingInput" placeholder="name@example.com">
+                  <label for="floatingInput">Recipe Search</label>
+                </div>
+              </div>
+              <div class="modal-body">
+                <ul class="list-group">
+                  <li class="list-group-item">search result</li>
+                  <li class="list-group-item">search result</li>
+                  <li class="list-group-item">search result</li>
+                  <li class="list-group-item">search result</li>
+                  <li class="list-group-item">search result</li>
+                  <li class="list-group-item">search result</li>
+                  <li class="list-group-item">search result</li>
+                  <li class="list-group-item">search result</li>
+                  <li class="list-group-item">search result</li>
+                  <li class="list-group-item">search result</li>
+                  <li class="list-group-item">search result</li>
+                  <li class="list-group-item">search result</li>
+                  <li class="list-group-item">search result</li>
+
+                </ul>
+
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary">Understood</button>
               </div>
             </div>
           </div>
-          <div class="row row-cols-1 row-cols-sm-2 row-cols-md-5 justify-content-md-center " id="recipe_showcase">
-          
-
-            
-          </div>
-          
-            
-        
-          
         </div>
-
     </section>
    
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
     <script>
 
       const recipe_showcase = document.getElementById("recipe_showcase")
+      const meal_plan_showcase = document.getElementById("meal_plan_showcase")
+      loadMenu()
 
-      loadRecipes()
+      async function loadMenu(){
+        try{
+          const response = await fetch('/get_menu', {
+            method : 'POST'
+          });
 
+          const fullResponse = await response.json();
+          const menu = fullResponse.menu;  // Extract the array
 
-      async function loadRecipes(){
-            try {
-                const response = await fetch('/get_recipes',{
-                    method: 'POST'
-                });
-                const recipes = await response.json();
-                contents = ""
-                if (recipes.length == 0){
-                    contents = "No Recipes in the database"
-                }
-                
-                recipes.forEach(element => {
-                    contents += '\
-                    <div class="col">\
-                      <div class="card ">\
-                        <img src="/static/recipe_images/'+element[5]+'" class="card-img-top img-thumbnail" style="height: 200px; object-fit: cover;" alt="...">\
-                        <div class="card-body">\
-                          <h5>'+element[1]+'</small></h5>\
-                          <p>'+element[2] + '. Pg:'+element[3]+'</p>\
-                          <a href="/view_recipe/'+element[0]+'" class="btn btn-primary">View Recipe</a><br>\
-                          <small><a href="" class="card-link" onclick="deleteRecipe('+element[0]+')">Delete Recipe</a></small>\
-                        </div>\
+          meal_plan_contents = ""
+          console.log(menu)
+          console.log(menu.length)
+          if (menu.length == 0){
+            meal_plan_contents =  ' <div class="col-lg-3 col-md-6 col-12" for each day>\
+                              <div class="card h-100">  <!-- h-100 fills height -->\
+                                <div class="card-header bg-primary text-white text-center">\
+                                  <h5>Monday</h5>  <!-- Short day name -->\
+                                </div>\
+                                <div class="card-body d-flex flex-column">\
+                                  <h6 class="card-title">Recipe Name</h6>\
+                                  <p class="card-text text-muted small mb-2">Difficulty: Medium</p>\
+                                  <p class="card-text flex-grow-1">Short instructions preview...</p>\
+                                  <div class="card-footer bg-light">\
+                                    <small>Source: Pinch of Nom</small>\
+                                  </div>\
+                                </div>\
+                              </div>\
+                            </div>\
+                          '
+          }
+          else{
+            menu.forEach((dayObj, index) => {
+              const day = Object.keys(dayObj)[0];
+              const recipe = dayObj[day];
+              const day_name = day.split("_")[0].toUpperCase();
+              console.log(day_name)
+                meal_plan_contents += '\
+                <div class="col ">\
+                  <div class="card mt-4 position-relative">\
+                    <div class="" style="position:absolute;top:20px;right:20px !important;">\
+                        <a href="/view_recipe/'+recipe['id']+'" class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#changeRecipeModal">Change</a><br>\
+                      </div>\
+                    <img src="/static/recipe_images/'+recipe['photo_path']+'" class="card-img-top img-thumbnail" style="height: 200px; object-fit: cover;" alt="...">\
+                    <div class="card-body">\
+                      <h3 class="text-center">'+day_name+'</h3>\
+                      <p class="text-center">'+recipe['name']+'</p>\
+                      <div class="flex">\
+                      <a href="/view_recipe/'+recipe['id']+'" class="btn btn-primary">View Recipe</a><br>\
                       </div>\
                     </div>\
-                    '
-                });
-                recipe_showcase.innerHTML = contents
-                console.log(recipes);
-            }
-            catch(error){
-                console.log(error);
-            }
-        }
+                  </div>\
+                </div>\
+                '
+            });
+          }
+          meal_plan_showcase.innerHTML = meal_plan_contents
 
+
+          console.log(menu)
+        }
+        catch (error){
+          console.log("Error occured: "+error)
+        }
+      }
     </script>
   </body>
 

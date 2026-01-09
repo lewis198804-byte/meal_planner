@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, jsonify
 from werkzeug.utils import secure_filename
+from PIL import Image
 import sqlite3
 import requests
 import base64
@@ -24,6 +25,30 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+from PIL import Image
+import os
+
+from PIL import Image, ImageOps
+import os
+
+def save_recipe_image(uploaded_file, output_path, max_size=800):
+    """Process with correct orientation."""
+    img = Image.open(uploaded_file)
+    
+    # Fix orientation FIRST
+    img = ImageOps.exif_transpose(img)
+    
+    # Convert if needed (after rotation)
+    if img.mode in ('RGBA', 'P'):
+        img = img.convert('RGB')
+    
+    # Resize & save
+    img.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
+    img.save(output_path, 'JPEG', quality=85, optimize=True, subsampling=0)
+
+
+
+
 @app.route("/")
 def home():
     return render_template("index.html")
@@ -45,7 +70,7 @@ def build_database():
     "id INTEGER PRIMARY KEY AUTOINCREMENT," \
     "name TEXT," \
     "recipe_id INTEGER)")
-    cur.execute("CREATE TABLE meal_plan (" \
+    cur.execute("CREATE TABLE meal_plans (" \
     "id INTEGER PRIMARY KEY AUTOINCREMENT," \
     "monday_recipe_id INTEGER," \
     "tuesday_recipe_id INTEGER," \
@@ -71,32 +96,6 @@ def recipes():
 def ai_recipe_add():
     return render_template("ai_recipe_add.html")
 
-
-@app.route("/recipe_save", methods=["POST"])
-def recipe_save():
-    formData = request.form
-    con = sqlite3.connect("database.db")
-    cur = con.cursor()
-    cur.execute("INSERT INTO recipes (name,location,page_nu,rating) VALUES (?,?,?,?)" ,(formData['recipe_name'], formData['where'], formData['page_number'],formData['rating']))
-    recipe_id = cur.lastrowid
-    print(recipe_id)
-    ingredients_strings = formData['ingredients'].split(",")
-    ingredients_list = []
-    
-    for item in ingredients_strings:
-        
-        if len(item.strip()) > 0:
-            this_ingredient = (item.strip(), recipe_id)
-            ingredients_list.append(this_ingredient)
-    
-    print(ingredients_list)
-       
-    cur.executemany("INSERT INTO ingredients (name,recipe_id) VALUES (?,?)" , ingredients_list)
-
-    con.commit()
-    con.close()
-    return render_template("recipe_save.html",recipeName = formData['recipe_name'])
-
 @app.route("/save_ai_recipe", methods=['POST'])
 def save_ai_recipe():
     name = request.form['recipe_name']
@@ -119,7 +118,11 @@ def save_ai_recipe():
         unique_id = str(uuid.uuid4()).replace('-', '')[:8]
         filename = f"{unique_id}_{safe_name}"  # "a1b2c3d4_recipe.jpg"
         image_filename = filename
-        photo.save(f"static/recipe_images/{filename}")
+
+
+        
+        save_recipe_image(photo,f"static/recipe_images/{filename}")
+
     else:
         image_filename = None  # Or default image
     
@@ -155,6 +158,38 @@ def get_recipes():
     response = cur.fetchall()
     con.close()
     return response
+
+@app.route("/get_menu", methods=['POST'])
+def get_menu():
+    con = sqlite3.connect("database.db")
+    con.row_factory = sqlite3.Row
+    cur = con.cursor()
+    
+    # Get the current plan
+    days = ['monday_recipe_id', 'tuesday_recipe_id', 'wednesday_recipe_id',
+            'thursday_recipe_id', 'friday_recipe_id', 'saturday_recipe_id', 'sunday_recipe_id']
+    
+    cur.execute("SELECT " + ", ".join(days) + " FROM meal_plans WHERE current_plan = 1")
+    plan = cur.fetchone()
+    
+    if not plan:
+        con.close()
+        return jsonify({"ok": False, "error": "no plan found"})
+    
+    # Simple loop like your original, but builds ordered array
+    menu = []
+    for day in days:
+        recipe_id = plan[day]
+        if recipe_id:
+            cur.execute("SELECT * FROM recipes WHERE id = ?", (recipe_id,))
+            recipe = cur.fetchone()
+            if recipe:
+                menu.append({day: dict(recipe)})
+    
+    con.close()
+    print(f"Menu array length: {len(menu)}")
+    print(f"Menu sample: {menu[:1] if menu else 'EMPTY'}")
+    return jsonify({"ok": True, "menu": menu})
 
 
 @app.route("/del_recipe/<recipe_id>", methods=['POST'])
@@ -204,7 +239,7 @@ def analyze_recipe():
                 {'type': 'text', 'text': '''
                     Analyze this recipe photo. Extract as RAW JSON only with no formatting. 
                     When describing the ingredients do not use commas within a single ingredient description as the ingredients will be split using comma as a seperator. 
-                    When describing the instruction steps use a full stop to seperate the different steps. DO NOT use any commas. String will be split using the full stop as a serperator. 
+                    When describing the recipe instructions use a full stop to seperate the different steps. DO NOT use any commas. String will be split using the full stop as a serperator. 
                     Any temperatures should be in celcius as i live in the UK. 
                     Output will be read by python program:
                     {

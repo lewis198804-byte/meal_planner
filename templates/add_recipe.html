@@ -122,7 +122,12 @@
                                         <input type="range" class="form-range w-100" step="1" min="0" max="2" value="0" id="difficulty_range">
                                         <output for="difficulty_range" id="rangeValue"></output>
                                     </div>
-                                    
+                                    <div class="mb-3 mx-auto text-center" >
+                                        <label class="form-label" for="tags">Tags</label>
+                                        <input type="text" class="form-control w-100" name="tags" id="tags" aria-describedby="tags-help">
+                                        <div id="tags-help" class="form-text"># seperated list of tags relating to this recipe.</div>
+
+                                    </div>
                                     </form> <!-- FORM 2 CLOSED -->
                                 </div> <!-- ACCORDION-BODY 2 CLOSED -->
                                 </div> <!-- COLLAPSE 2 CLOSED -->
@@ -171,7 +176,8 @@
 
         const spinner_div = document.getElementById('spinner');
         const save_button = document.getElementById('save_button')
-       
+        const tags = document.getElementById("tags")
+
         
         save_button.disabled = true;
         spinner_div.hidden = true;
@@ -221,6 +227,7 @@
             formData.append("ingredients", ingredients.value);
             formData.append("difficulty", difficulty_text);
             formData.append("recipe_photo", recipe_photo.files[0]);
+            formData.append("tags",tags.value);
             
             console.log(formData)
             const response = await fetch("/save_ai_recipe", {

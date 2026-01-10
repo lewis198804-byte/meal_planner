@@ -159,6 +159,17 @@ def get_recipes():
     con.close()
     return response
 
+@app.route("/search_recipes/<search_term>", methods=['POST'])
+def search_recipes(search_term):
+    con = sqlite3.connect("database.db")
+    cur = con.cursor()
+    cur.execute("SELECT * FROM recipes WHERE name LIKE ? OR tags LIKE ?", (f'%{search_term}%',)*2)
+    response = cur.fetchall()
+    con.close()
+    return response
+
+
+
 @app.route("/get_menu", methods=['POST'])
 def get_menu():
     con = sqlite3.connect("database.db")
@@ -241,6 +252,7 @@ def analyze_recipe():
                     When describing the ingredients do not use commas within a single ingredient description as the ingredients will be split using comma as a seperator. 
                     When describing the recipe instructions use a full stop to seperate the different steps. DO NOT use any commas. String will be split using the full stop as a serperator. 
                     Any temperatures should be in celcius as i live in the UK. 
+                    Generate common sense tags for the recipe using context like included ingredients, vegetarian or meat, batch cook or single meal etc.
                     Output will be read by python program:
                     {
                       "recipe_name": "",
@@ -249,6 +261,7 @@ def analyze_recipe():
                       "servings": "",
                       "prep_time": "",
                       "difficulty": "easy/medium/hard",
+                      "tags" : ["#related_tag #related_tag"],
                       "page_number": ""
                  
                     }

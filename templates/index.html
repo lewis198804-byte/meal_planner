@@ -48,7 +48,8 @@
     </section>
     <section>
         <div class="container" >
-                    <div class=" text-left row-cols-12 justify-content-md-center" > <h1>This Week</h1> </div>
+                    <div class=" text-left row" > <h1>This Week</h1> </div>
+                    <div class=" text-end row row-col-12" > <div class="col"><a ahref="#" class=" btn btn-small btn-light"> New plan </a> </div></div>
           <div class="row row-cols-2 row-cols-md-3 justify-content-center" id="meal_plan_showcase">
 
           </div>
@@ -66,26 +67,13 @@
               </div>
               <div class="p-3">
                 <div class="form-floating mb-3">
-                  <input type="email" class="form-control" id="floatingInput" placeholder="name@example.com">
-                  <label for="floatingInput">Recipe Search</label>
+                  <input type="email" class="form-control" id="searchInput" placeholder="name@example.com">
+                  <label for="searchInput">Recipe Search</label>
                 </div>
               </div>
               <div class="modal-body">
-                <ul class="list-group">
-                  <li class="list-group-item">search result</li>
-                  <li class="list-group-item">search result</li>
-                  <li class="list-group-item">search result</li>
-                  <li class="list-group-item">search result</li>
-                  <li class="list-group-item">search result</li>
-                  <li class="list-group-item">search result</li>
-                  <li class="list-group-item">search result</li>
-                  <li class="list-group-item">search result</li>
-                  <li class="list-group-item">search result</li>
-                  <li class="list-group-item">search result</li>
-                  <li class="list-group-item">search result</li>
-                  <li class="list-group-item">search result</li>
-                  <li class="list-group-item">search result</li>
-
+                <ul class="list-group" id="search_results_list">
+                 
                 </ul>
 
               </div>
@@ -103,6 +91,9 @@
 
       const recipe_showcase = document.getElementById("recipe_showcase")
       const meal_plan_showcase = document.getElementById("meal_plan_showcase")
+      const searchInput = document.getElementById("searchInput")
+      const search_results_list = document.getElementById("search_results_list")
+
       loadMenu()
 
       async function loadMenu(){
@@ -113,7 +104,6 @@
 
           const fullResponse = await response.json();
           const menu = fullResponse.menu;  // Extract the array
-
           meal_plan_contents = ""
           console.log(menu)
           console.log(menu.length)
@@ -136,20 +126,36 @@
                           '
           }
           else{
+            const weekday = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+            const d = new Date();
+            let today = weekday[d.getDay()];
+            today = capitalizeFirstLetter(today);
+            
             menu.forEach((dayObj, index) => {
               const day = Object.keys(dayObj)[0];
               const recipe = dayObj[day];
-              const day_name = day.split("_")[0].toUpperCase();
-              console.log(day_name)
+              let recipe_day_name = day.split("_")[0];
+              recipe_day_name = capitalizeFirstLetter(recipe_day_name);
+
+              
+              if (recipe_day_name == today){
+                highlight_today = "border-warning border-4"
+                today_badge = "<span class='badge text-bg-warning position-absolute' style='top:15px;left:15px;'>Today!</span>"
+              }
+              else{
+                highlight_today = ""
+                today_badge = ""
+              }
                 meal_plan_contents += '\
                 <div class="col ">\
-                  <div class="card mt-4 position-relative">\
-                    <div class="" style="position:absolute;top:20px;right:20px !important;">\
+                  <div class="card '+highlight_today+' mt-4 position-relative">\
+                    <div class="" style="position:absolute;top:20px;right:20px;">\
                         <a href="/view_recipe/'+recipe['id']+'" class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#changeRecipeModal">Change</a><br>\
                       </div>\
-                    <img src="/static/recipe_images/'+recipe['photo_path']+'" class="card-img-top img-thumbnail" style="height: 200px; object-fit: cover;" alt="...">\
+                    <img src="/static/recipe_images/'+recipe['photo_path']+'" class="card-img-top img-thumbnail" style="height: 150px; object-fit: cover;" alt="...">\
                     <div class="card-body">\
-                      <h3 class="text-center">'+day_name+'</h3>\
+                    '+today_badge+'\
+                      <h3 class="text-center">'+recipe_day_name+'</h3>\
                       <p class="text-center">'+recipe['name']+'</p>\
                       <div class="flex">\
                       <a href="/view_recipe/'+recipe['id']+'" class="btn btn-primary">View Recipe</a><br>\
@@ -161,14 +167,69 @@
             });
           }
           meal_plan_showcase.innerHTML = meal_plan_contents
-
-
-          console.log(menu)
         }
         catch (error){
           console.log("Error occured: "+error)
         }
       }
+
+
+      function capitalizeFirstLetter(string) {
+        return string.charAt(0).toUpperCase() + string.slice(1);
+      }
+
+      // Waits for typing to pause before searching
+      function debounce(fn, delayMs) {
+        let timeoutId = null;
+        
+        return async function(...args) {
+          // Cancel previous timer
+          if (timeoutId) {
+            clearTimeout(timeoutId);
+          }
+          
+          // Wait for pause, then call fn
+          timeoutId = setTimeout(async () => {
+            await fn(...args);
+          }, delayMs);
+        };
+      }
+
+      // Usage with async/await
+      const debouncedSearch = debounce(async (searchTerm) => {
+        if (searchTerm == ""){
+          showResults([])
+        }
+        else{
+        const response = await fetch('/search_recipes/' +searchTerm, {method:'POST'});
+        const results = await response.json();
+        showResults(results);
+        }
+      }, 500);
+
+      searchInput.addEventListener('input', (e) => {
+        debouncedSearch(e.target.value);
+        
+
+      });
+
+      function showResults(data){
+        console.log(data)
+        list_content = "";
+
+        if (data.length > 0){
+          data.forEach(element => {
+            list_content += '<li class="list-group-item d-flex justify-content-between align-items-start"><div>'+element[1]+' </div><button class="btn btn-primary btn-sm">Swap</button> </li>';
+          });
+        }
+        else {
+          list_content = '<li class="list-group-item">No recipes found</li>';
+        }
+
+        search_results_list.innerHTML = list_content;
+        
+      }
+
     </script>
   </body>
 

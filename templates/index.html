@@ -48,6 +48,7 @@
     </section>
     <section>
         <div class="container" >
+          
                     <div class=" text-left row" > <h1>This Week</h1> </div>
                     <div class=" text-end row row-col-12" > <div class="col"><a ahref="#" class=" btn btn-small btn-light"> New plan </a> </div></div>
           <div class="row row-cols-2 row-cols-md-3 justify-content-center" id="meal_plan_showcase">
@@ -55,14 +56,13 @@
           </div>
         </div>
 
+<!--Modal window layouts-->
+        <!--Recipe change Modal-->
         <div class="modal fade " id="changeRecipeModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
-          
           <div class="modal-dialog modal-dialog-scrollable">
             <div class="modal-content">
-              
               <div class="modal-header">
                 <h1 class="modal-title fs-5" id="staticBackdropLabel">Recipe Search</h1>
-                
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
               </div>
               <div class="p-3">
@@ -73,17 +73,33 @@
               </div>
               <div class="modal-body">
                 <ul class="list-group" id="search_results_list">
-                 
+                  <!--Insert search results here via Javascript-->
                 </ul>
-
               </div>
               <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary">Understood</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
               </div>
             </div>
           </div>
         </div>
+
+        <!--Recipe info Modal-->
+        <div class="modal fade " id="swapRecipeDetailsModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h1 class="modal-title fs-5" id="exampleModalToggleLabel">Recipe Name</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                Recipe Details
+              </div>
+              <div class="modal-footer">
+                <button class="btn btn-primary" data-bs-target="#changeRecipeModal" data-bs-toggle="modal">Back</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
     </section>
    
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
@@ -93,6 +109,11 @@
       const meal_plan_showcase = document.getElementById("meal_plan_showcase")
       const searchInput = document.getElementById("searchInput")
       const search_results_list = document.getElementById("search_results_list")
+      const submitChangeButton = document.getElementById("submitChangeButton")
+      const changeRecipeModal = document.getElementById("changeRecipeModal")
+
+      changeRecipeModal.addEventListener("hidden.bs.modal",event => { searchInput.value=""; search_results_list.innerHTML = "";})
+
 
       loadMenu()
 
@@ -150,7 +171,7 @@
                 <div class="col ">\
                   <div class="card '+highlight_today+' mt-4 position-relative">\
                     <div class="" style="position:absolute;top:20px;right:20px;">\
-                        <a href="/view_recipe/'+recipe['id']+'" class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#changeRecipeModal">Change</a><br>\
+                        <a href="/view_recipe/'+recipe['id']+'" onclick="setRecipeDayToChange(\''+day+'\')" class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#changeRecipeModal">Change</a><br>\
                       </div>\
                     <img src="/static/recipe_images/'+recipe['photo_path']+'" class="card-img-top img-thumbnail" style="height: 150px; object-fit: cover;" alt="...">\
                     <div class="card-body">\
@@ -173,6 +194,7 @@
         }
       }
 
+     
 
       function capitalizeFirstLetter(string) {
         return string.charAt(0).toUpperCase() + string.slice(1);
@@ -209,18 +231,38 @@
 
       searchInput.addEventListener('input', (e) => {
         debouncedSearch(e.target.value);
-        
-
       });
 
+
+       function setRecipeDayToChange(dayId){
+        changeRecipeModal.setAttribute("data-recipe-day", ""+dayId+"")
+      }
+     
+      async function saveChange(recipeDayId, newRecipeId){
+        event.target.parentElement.classList.add("b-5");
+        const changeData = new FormData();
+        changeData.append("dayToChange", recipeDayId);
+        changeData.append("newRecipe",newRecipeId)
+        const response = await fetch("/save_recipe_day_change/" , {method : 'POST', body : changeData});
+        const result = await response.json()
+        console.log(result)
+        loadMenu()
+      }
+
       function showResults(data){
+        const recipeDay = changeRecipeModal.getAttribute("data-recipe-day")
         console.log(data)
         list_content = "";
 
         if (data.length > 0){
           data.forEach(element => {
-            list_content += '<li class="list-group-item d-flex justify-content-between align-items-start"><div>'+element[1]+' </div><button class="btn btn-primary btn-sm">Swap</button> </li>';
-          });
+            list_content += '<li class="list-group-item d-flex justify-content-between align-items-start list-group-item-action">\
+              <div>'+element[1]+' </div>\
+              <div class="btn-group" role="group" aria-label="Basic example">\
+                <button class="btn btn-info" data-bs-target="#swapRecipeDetailsModal" data-bs-toggle="modal" href="#offcanvasExample">Info</button>\
+                <button onclick="saveChange(\''+recipeDay+'\',\''+element[0]+'\')" data-bs-dismiss="modal" class="btn btn-primary btn-sm">Swap</button> </li>\
+              </div>'
+            });
         }
         else {
           list_content = '<li class="list-group-item">No recipes found</li>';

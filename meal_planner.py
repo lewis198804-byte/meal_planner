@@ -168,7 +168,17 @@ def search_recipes(search_term):
     con.close()
     return response
 
+@app.route("/save_recipe_day_change/", methods=['POST'])
+def save_recipe_day_change():
+    day = request.form['dayToChange']
+    newRecipe = request.form['newRecipe']
+    con = sqlite3.connect("database.db")
+    cur = con.cursor()
+    cur.execute("UPDATE meal_plans SET "+day+" = ? WHERE current_plan = 1", (newRecipe,))
+    con.commit()
+    con.close()
 
+    return {"success" : "ok"}
 
 @app.route("/get_menu", methods=['POST'])
 def get_menu():

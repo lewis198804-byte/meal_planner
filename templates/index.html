@@ -50,7 +50,7 @@
         <div class="container" >
           
                     <div class=" text-left row" > <h1>This Week</h1> </div>
-                    <div class=" text-end row row-col-12" > <div class="col"><a ahref="#" class=" btn btn-small btn-light"> New plan </a> </div></div>
+                    <div class=" text-end row row-col-12" > <div class="col"><a class=" btn btn-small btn-light"  data-bs-toggle="offcanvas" data-bs-target="#newMenuOffcanvas" aria-controls="newMenuOffcanvas"> New plan </a> </div></div>
           <div class="row row-cols-2 row-cols-md-3 justify-content-center" id="meal_plan_showcase">
 
           </div>
@@ -77,24 +77,68 @@
                 </ul>
               </div>
               <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" onclick="clearSearchModal()" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
               </div>
             </div>
           </div>
         </div>
 
         <!--Recipe info Modal-->
-        <div class="modal fade " id="swapRecipeDetailsModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">          <div class="modal-dialog modal-dialog-centered">
+        <div class="modal fade " id="swapRecipeDetailsModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">          
+          <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-              <div class="modal-header">
-                <h1 class="modal-title fs-5" id="exampleModalToggleLabel">Recipe Name</h1>
+              <div class="modal-header" id="recipeInfoHeader">
+                
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
               </div>
               <div class="modal-body">
-                Recipe Details
+                <div class="container">
+                  <div class="row row-col-2">
+                    <div class="col" id="recipeInfoImage">
+                      <!--Insert recipe photo here with javascript-->
+                    </div>
+                    <div class="col">
+                      <p>recipe details</p>
+                    </div>
+                  </div>
+                </div>
               </div>
               <div class="modal-footer">
                 <button class="btn btn-primary" data-bs-target="#changeRecipeModal" data-bs-toggle="modal">Back</button>
+                <button class="btn btn-primary" id="recipeInfoSwapButton" onclick="saveChange()" data-bs-toggle="modal">Swap In!</button>
+ 
+              </div>
+            </div>
+          </div>
+        </div>
+
+<!--Offcanvas layouts-->
+        <!--New Menu Plan Offcanvas-->
+        <div class="offcanvas offcanvas-start" tabindex="-1" id="newMenuOffcanvas" aria-labelledby="newMenuOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="newMenuOffcanvasLabel">New Meal Plan</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <div>
+              New week, new plan! Or you just don't like the current one? Put together a new meal plan here!
+            </div>
+            <div class="dropdown-center mt-3 text-center">
+              <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                Plan type
+              </button>
+              <ul class="dropdown-menu">
+                <li><a onclick="checkGeneratePlanType('auto')" class="dropdown-item" href="#">Auto</a></li>
+                <li><a onclick="checkGeneratePlanType('param')" class="dropdown-item" href="#">Enter paramaters</a></li>
+              </ul>
+            </div>
+            
+            <div class="mt-5">
+              <ul class=" list-group" id="generatedPlanList">
+                <!-- insert potential generated meal plan here via javascript-->
+              </ul>
+              <div class="mt-5 text-center p-3">
+                <button id="newPlanSubmit" class="btn btn-primary invisible">Looks Good!</button>
               </div>
             </div>
           </div>
@@ -105,14 +149,20 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
     <script>
 
-      const recipe_showcase = document.getElementById("recipe_showcase")
-      const meal_plan_showcase = document.getElementById("meal_plan_showcase")
-      const searchInput = document.getElementById("searchInput")
-      const search_results_list = document.getElementById("search_results_list")
-      const submitChangeButton = document.getElementById("submitChangeButton")
-      const changeRecipeModal = document.getElementById("changeRecipeModal")
+      const recipe_showcase = document.getElementById("recipe_showcase");
+      const meal_plan_showcase = document.getElementById("meal_plan_showcase");
+      const searchInput = document.getElementById("searchInput");
+      const search_results_list = document.getElementById("search_results_list");
+      const submitChangeButton = document.getElementById("submitChangeButton");
+      const changeRecipeModal = document.getElementById("changeRecipeModal");
 
-      changeRecipeModal.addEventListener("hidden.bs.modal",event => { searchInput.value=""; search_results_list.innerHTML = "";})
+      const recipeInfoHeader = document.getElementById("recipeInfoHeader");
+      const recipeInfoImage = document.getElementById("recipeInfoImage")
+      const recipeInfoSwapButton = document.getElementById("recipeInfoSwapButton")
+
+      const generatedPlanList = document.getElementById("generatedPlanList")
+      const newPlanSubmit = document.getElementById("newPlanSubmit")
+      const weekday = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 
 
       loadMenu()
@@ -147,7 +197,6 @@
                           '
           }
           else{
-            const weekday = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
             const d = new Date();
             let today = weekday[d.getDay()];
             today = capitalizeFirstLetter(today);
@@ -223,7 +272,7 @@
           showResults([])
         }
         else{
-        const response = await fetch('/search_recipes/' +searchTerm, {method:'POST'});
+        const response = await fetch('/search_recipes?q='+encodeURIComponent(searchTerm)+'');
         const results = await response.json();
         showResults(results);
         }
@@ -245,8 +294,15 @@
         changeData.append("newRecipe",newRecipeId)
         const response = await fetch("/save_recipe_day_change/" , {method : 'POST', body : changeData});
         const result = await response.json()
-        console.log(result)
+        clearSearchModal()
         loadMenu()
+      }
+
+      function clearSearchModal(){
+        searchInput.value = ""
+        search_results_list.innerHTML = ""
+        recipeInfoHeader.innerHTML = ""
+        recipeInfoImage.innerHTML = ""
       }
 
       function showResults(data){
@@ -259,7 +315,7 @@
             list_content += '<li class="list-group-item d-flex justify-content-between align-items-start list-group-item-action">\
               <div>'+element[1]+' </div>\
               <div class="btn-group" role="group" aria-label="Basic example">\
-                <button class="btn btn-info" data-bs-target="#swapRecipeDetailsModal" data-bs-toggle="modal" href="#offcanvasExample">Info</button>\
+                <button class="btn btn-info" data-bs-target="#swapRecipeDetailsModal" data-bs-toggle="modal" href="#offcanvasExample" onclick="getRecipeOverview(\''+element[0]+'\')">Info</button>\
                 <button onclick="saveChange(\''+recipeDay+'\',\''+element[0]+'\')" data-bs-dismiss="modal" class="btn btn-primary btn-sm">Swap</button> </li>\
               </div>'
             });
@@ -272,6 +328,55 @@
         
       }
 
+      async function getRecipeOverview(recipeId){
+        const recipeDay = changeRecipeModal.getAttribute("data-recipe-day")
+        const response = await fetch("/get_recipe_overview/"+recipeId,{method : 'GET'});
+        const result = await response.json()
+        recipeInfoHeader.innerHTML = '<h1 class="modal-title fs-5" id="exampleModalToggleLabel" id="recipeInfoHeader">'+result['name']+'</h1>';
+        recipeInfoImage.innerHTML =  '<img src="/static/recipe_images/'+result['photo_path']+'" class="card-img-top img-thumbnail img-fluid" style="height: 150px; object-fit: cover;" alt="...">'
+        recipeInfoSwapButton.setAttribute("onclick", "saveChange(\""+recipeDay+"\", "+recipeId+")")
+      }
+
+      async function checkGeneratePlanType(planType){
+        if (planType == "auto"){
+          const planData = new FormData()
+          planData.append("planType", planType);
+          const response = await fetch('/gen_new_meal_plan' ,{method:'POST', body : planData});
+          const potentialPlan = await response.json();
+          console.log(potentialPlan);
+          listContent = "";
+          dayOfTheWeek = 1;
+          const newPlan = new Object()
+          potentialPlan.forEach(element => {
+            listContent += "<li class='list-group-item'>"+element['name']+" <span class='badge text-bg-warning'>"+weekday[dayOfTheWeek]+"</span>  <a href='/view_recipe/"+element['id']+"' target='_blank' class='badge text-bg-light'>i</a></li>"
+            newPlan[weekday[dayOfTheWeek].toLowerCase()+"_recipe_id"] = element['id'];
+            dayOfTheWeek += 1;
+            if (dayOfTheWeek > 6){dayOfTheWeek = 0;}
+          });
+          generatedPlanList.innerHTML = listContent;
+          if (newPlanSubmit.classList.contains("invisible")){newPlanSubmit.classList.remove("invisible");}
+          newPlanSubmit.dataset.plan = JSON.stringify(newPlan);
+          newPlanSubmit.setAttribute("onclick", "saveNewPlan()");
+          //console.log(newPlan);
+          //generate new meal plan automatically, with no user input
+        }
+        else if (planType == "param"){
+          //show form for parameter entry, then submit and generate meal plan based on params. 
+        }
+      }
+
+      async function saveNewPlan(){
+        const passedData = JSON.parse(newPlanSubmit.dataset.plan);
+        const newPlanData = new FormData()
+        for (const day in passedData) {
+          newPlanData.append(day, passedData[day]);
+        }
+        const response = await fetch('/save_new_plan' ,{ method:'POST', body : newPlanData});
+        const result = await response.json();
+        if (result.success == "ok"){
+          loadMenu()
+        }
+      }
     </script>
   </body>
 

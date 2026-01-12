@@ -159,14 +159,31 @@ def get_recipes():
     con.close()
     return response
 
-@app.route("/search_recipes/<search_term>", methods=['POST'])
-def search_recipes(search_term):
+@app.route("/search_recipes")
+def search_recipes():
+    search_term = request.args.get('q', '').strip()
     con = sqlite3.connect("database.db")
     cur = con.cursor()
     cur.execute("SELECT * FROM recipes WHERE name LIKE ? OR tags LIKE ?", (f'%{search_term}%',)*2)
     response = cur.fetchall()
     con.close()
     return response
+
+@app.route("/get_recipe_overview/<recipe_id>", methods=['GET']) 
+def get_recipe_overview(recipe_id):
+    con = sqlite3.connect("database.db")
+    con.row_factory = sqlite3.Row
+    cur = con.cursor()
+    
+    cur.execute("SELECT * FROM recipes WHERE id = ?", (recipe_id,))
+    row = cur.fetchone()
+    
+    con.close()
+    
+    if row:
+        return jsonify(dict(row)) 
+    else:
+        return jsonify({"error": "Recipe not found"}), 404
 
 @app.route("/save_recipe_day_change/", methods=['POST'])
 def save_recipe_day_change():
@@ -208,10 +225,49 @@ def get_menu():
                 menu.append({day: dict(recipe)})
     
     con.close()
-    print(f"Menu array length: {len(menu)}")
-    print(f"Menu sample: {menu[:1] if menu else 'EMPTY'}")
+   
     return jsonify({"ok": True, "menu": menu})
 
+
+@app.route("/gen_new_meal_plan", methods=['POST'])
+def gen_new_plan():
+    con = sqlite3.connect("database.db")
+    con.row_factory = sqlite3.Row
+    cur = con.cursor()
+    
+    if request.form["planType"] == "auto":
+        cur.execute("SELECT * FROM recipes ORDER BY RANDOM() LIMIT 7")
+        rows = cur.fetchall()
+        
+        # Convert Row → dicts for JSON
+        recipes = [dict(row) for row in rows]
+        
+        con.close()
+        return jsonify(recipes)
+    #else take the params provided and apply them to each days recipe selection
+
+    con.close()
+    return "something"
+
+
+@app.route("/save_new_plan", methods=['POST'])
+def save_new_plan():
+    print(request.form['monday_recipe_id'])
+    days = ['monday_recipe_id', 'tuesday_recipe_id', 'wednesday_recipe_id',
+            'thursday_recipe_id', 'friday_recipe_id', 'saturday_recipe_id', 'sunday_recipe_id']
+    columns = ','.join(days)
+    recipe_ids = []
+    for day in request.form:
+        recipe_ids.append(request.form[day])
+    recipes_to_enter = ','.join(recipe_ids)    
+    con = sqlite3.connect("database.db")
+    cur = con.cursor()
+    cur.execute("UPDATE meal_plans SET current_plan = 0 WHERE current_plan = 1")
+    cur.execute("INSERT INTO meal_plans ("+columns+", current_plan) VALUES ("+recipes_to_enter+", 1)")
+    con.commit()
+    con.close()
+
+    return {"success" : "ok"}
 
 @app.route("/del_recipe/<recipe_id>", methods=['POST'])
 def delete_recipe(recipe_id):
@@ -223,7 +279,7 @@ def delete_recipe(recipe_id):
     con.close()
     return "deleted"
 
-@app.route("/view_recipe/<recipe_id>")
+@app.route("/view_recipe/<recipe_id>", methods=['GET'])
 def view_recipe(recipe_id):
     print(recipe_id)
     con = sqlite3.connect("database.db")

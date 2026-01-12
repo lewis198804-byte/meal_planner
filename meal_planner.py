@@ -103,7 +103,9 @@ def save_ai_recipe():
     page = request.form['page_number']
     instructions = request.form['instructions']
     ingredients = request.form['ingredients']
+    tags = request.form['tags']
     difficulty = request.form['difficulty']
+    description = request.form['description']
     con = sqlite3.connect("database.db")
     cur = con.cursor()
 
@@ -130,7 +132,7 @@ def save_ai_recipe():
          return jsonify({"ok": False, "error": error_text})
 
     
-    cur.execute("INSERT INTO recipes (name,location,page_nu,instructions,difficulty,photo_path) VALUES (?,?,?,?,?,?)" ,(name, location, page,instructions,difficulty,image_filename))
+    cur.execute("INSERT INTO recipes (name,location,page_nu,instructions,difficulty,tags,photo_path,desc) VALUES (?,?,?,?,?,?,?,?)" ,(name, location, page,instructions,difficulty,tags,image_filename,description))
     
     recipe_id = cur.lastrowid
     ingredients_strings = ingredients.split(",")
@@ -318,7 +320,8 @@ def analyze_recipe():
                     When describing the ingredients do not use commas within a single ingredient description as the ingredients will be split using comma as a seperator. 
                     When describing the recipe instructions use a full stop to seperate the different steps. DO NOT use any commas. String will be split using the full stop as a serperator. 
                     Any temperatures should be in celcius as i live in the UK. 
-                    Generate common sense tags for the recipe using context like included ingredients, vegetarian or meat, batch cook or single meal etc.
+                    Generate common sense tags for the recipe using context like included ingredients, vegetarian or meat, batch cook or single meal etc. Tags should be seperated by spaces, not commas
+                    For the description, generate a short synopsis of the recipe, no more than 100 characters long. 
                     Output will be read by python program:
                     {
                       "recipe_name": "",
@@ -328,7 +331,8 @@ def analyze_recipe():
                       "prep_time": "",
                       "difficulty": "easy/medium/hard",
                       "tags" : ["#related_tag #related_tag"],
-                      "page_number": ""
+                      "page_number": "",
+                      "description": ""
                  
                     }
                     Output ONLY valid JSON. 

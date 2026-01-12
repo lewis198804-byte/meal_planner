@@ -143,6 +143,12 @@
                                                 name="instructions" id="instructions" aria-describedby="instructions-help"></textarea>
                                         <div id="instructions-help" class="form-text">instructions from the recipe</div>
                                     </div>
+                                    <div class="mb-3 mx-auto text-center">
+                                        <label class="form-label" for="description">Description (100 chars)</label>
+                                        <textarea class="form-control w-100" style="height:10em; width:20em" 
+                                                name="description" id="description" aria-describedby="description-help"></textarea>
+                                        <div id="description-help" class="form-text">Description of the recipe</div>
+                                    </div>
                                     <div class="mb-3 mx-auto text-center" >
                                         <label class="form-label" for="page_number">Page Number?</label>
                                         <input type="text" class="form-control w-100" name="page_number" id="page_number">
@@ -187,6 +193,7 @@
         const page_number = document.getElementById("page_number");
         const instructions = document.getElementById("instructions");
         const ingredients = document.getElementById("ingredients")
+        const description = document.getElementById("description");
         ingredients.addEventListener("change", function(){checkRequired();setFieldColour(ingredients)})
         const name_field = document.getElementById("recipe_name")
         name_field.addEventListener("change", function(){checkRequired(),setFieldColour(name_field)})
@@ -265,9 +272,9 @@
                 ingredients_list_items += "<li class='list-group-item'>"+element+"</li>"
             });
 
-            page_number.value = recipe.page_number
-            tags.value = recipe.tags
-
+            page_number.value = recipe.page_number;
+            tags.value = recipe.tags;
+            description.value = recipe.description;
             ingredients_list.innerHTML = ingredients_list_items
 
             recipe.instructions.forEach(element => {
@@ -290,6 +297,7 @@
             formData.append("recipe_location", recipe_location.value);
             formData.append("page_number", page_number.value);
             formData.append("instructions", instructions.value);
+            formData.append("description", description.value);
             formData.append("ingredients", ingredients.value);
             formData.append("difficulty", difficulty_text);
             formData.append("recipe_photo", recipe_photo.files[0]);

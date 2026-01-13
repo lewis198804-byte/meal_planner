@@ -113,6 +113,12 @@
                                                 name="instructions" id="instructions" aria-describedby="instructions-help"></textarea>
                                         <div id="instructions-help" class="form-text">instructions from the recipe</div>
                                     </div>
+                                    <div class="mb-3 mx-auto text-center">
+                                        <label class="form-label" for="description">Description (100 chars)</label>
+                                        <textarea class="form-control w-100" style="height:10em; width:20em" 
+                                                name="description" id="description" aria-describedby="description-help"></textarea>
+                                        <div id="description-help" class="form-text">Description of the recipe</div>
+                                    </div>
                                     <div class="mb-3 mx-auto text-center" >
                                         <label class="form-label" for="page_number">Page Number?</label>
                                         <input type="text" class="form-control w-100" name="page_number" id="page_number">
@@ -169,7 +175,7 @@
         name_field.addEventListener("change", function(){recipe_name_field = name_field.value;checkRequired(),setFieldColour(name_field)})
         const recipe_location = document.getElementById("recipe_location")
         recipe_location.addEventListener("change", function(){location_field = recipe_location.value;checkRequired(),setFieldColour(recipe_location)})
-
+        const description = document.getElementById("description")
         const recipe_photo = document.getElementById("recipe_photo");
         const rangeInput = document.getElementById('difficulty_range');
         const rangeOutput = document.getElementById('rangeValue');
@@ -224,6 +230,7 @@
             formData.append("recipe_location", recipe_location.value);
             formData.append("page_number", page_number.value);
             formData.append("instructions", instructions.value);
+            formData.append("description", description.value)
             formData.append("ingredients", ingredients.value);
             formData.append("difficulty", difficulty_text);
             formData.append("recipe_photo", recipe_photo.files[0]);

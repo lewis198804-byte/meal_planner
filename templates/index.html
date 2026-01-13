@@ -25,7 +25,7 @@
   <body>
     <section>
         <header >
-          <nav class="navbar navbar-expand-lg bg-body-tertiary mb-5">
+          <nav class="navbar navbar-expand-lg bg-body-tertiary mb-2">
             <div class="container-fluid">
               <a class="navbar-brand" href="#"><strong>PlatePlanner</strong></a>
               <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -64,7 +64,6 @@
     <section>
         <div class="container" >
           
-                    <div class=" text-left row" > <h2>This Week</h2> </div>
                     <div class=" text-end row row-col-12" > <div class="col"><a class=" btn btn-small btn-light"  data-bs-toggle="offcanvas" data-bs-target="#newMenuOffcanvas" aria-controls="newMenuOffcanvas"> New plan </a> </div></div>
           <div class="row row-cols-2 row-cols-md-3 justify-content-center" id="meal_plan_showcase">
 
@@ -112,7 +111,7 @@
                     <div class="col" id="recipeInfoImage">
                       <!--Insert recipe photo here with javascript-->
                     </div>
-                    <div class="col">
+                    <div class="col" id="recipeInfoDesc">
                       <p>recipe details</p>
                     </div>
                   </div>
@@ -147,14 +146,24 @@
                 </div>
             </div>
             
-            <div class="mt-5">
+            <div class="mt-3">
+              <div id="paramsContainer" class="d-none">
+                <form>
+                  <div class="mb-3" id="formContainer">
+                    
+                    
+                  </div>
+                  
+                  <button type="submit" class="btn btn-primary">Submit</button>
+                </form>
+              </div>
                 <div class="accordion" id="generatedPlanList">
-                  <!-- insert potential generated meal plan here via javascript-->
+                  <!-- insert auto generated meal plan here via javascript-->
                 </div>
                 
               
-              <div class="mt-5 text-center p-3">
-                <button id="newPlanSubmit" class="btn btn-primary invisible" data-bs-dismiss="offcanvas">Looks Good!</button>
+              <div class="mt-2 text-center p-3">
+                <button id="newPlanSubmit" class="btn btn-primary d-none" data-bs-dismiss="offcanvas">Looks Good!</button>
               </div>
             </div>
           </div>
@@ -176,16 +185,23 @@
       const recipeInfoHeader = document.getElementById("recipeInfoHeader");
       const recipeInfoImage = document.getElementById("recipeInfoImage")
       const recipeInfoSwapButton = document.getElementById("recipeInfoSwapButton")
+      const recipeInfoDesc = document.getElementById("recipeInfoDesc")
 
       const generatedPlanList = document.getElementById("generatedPlanList")
       const newPlanSubmit = document.getElementById("newPlanSubmit")
       const newMenuOffcanvas = document.getElementById("newMenuOffcanvas")
+      const paramsContainer = document.getElementById("paramsContainer")
+      const formContainer = document.getElementById("formContainer")
+      const paramSelects = document.getElementsByClassName("param-selectors")
+
       
       const weekday = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+      const paramsOptions = ["Any", "Batch Cook A", "Batch Cook B", "Meat Free", "Quick meal", "Fakeaway", "Vegetarian"]
 
       newMenuOffcanvas.addEventListener("hidden.bs.offcanvas", clearNewMenuOffcanvas)
 
       loadMenu()
+      setDropdown()
 
       async function loadMenu(){
         try{
@@ -239,10 +255,12 @@
                 meal_plan_contents += '\
                 <div class="col ">\
                   <div class="card '+highlight_today+' mt-4 position-relative">\
+                      <a href="/view_recipe/'+recipe['id']+'" >\
+                    <img onload="setLoaded()" src="/static/recipe_images/'+recipe['photo_path']+'" class="recipe-img card-img-top img-thumbnail" style="height: 150px; width:100%; object-fit: cover;" alt="...">\
+                    </a>\
                     <div class="" style="position:absolute;top:20px;right:20px;">\
                         <a href="/view_recipe/'+recipe['id']+'" onclick="setRecipeDayToChange(\''+day+'\')" class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#changeRecipeModal">Change</a><br>\
                       </div>\
-                    <img onload="setLoaded()" src="/static/recipe_images/'+recipe['photo_path']+'" class="recipe-img card-img-top img-thumbnail" style="height: 150px; width:100%; object-fit: cover;" alt="...">\
                     <div class="card-body">\
                     '+today_badge+'\
                       <h3 class="text-center">'+recipe_day_name+'</h3>\
@@ -358,11 +376,15 @@
         const result = await response.json()
         recipeInfoHeader.innerHTML = '<h1 class="modal-title fs-5" id="exampleModalToggleLabel" id="recipeInfoHeader">'+result['name']+'</h1>';
         recipeInfoImage.innerHTML =  '<img src="/static/recipe_images/'+result['photo_path']+'" class="card-img-top img-thumbnail img-fluid" style="height: 150px; object-fit: cover;" alt="...">'
+        recipeInfoDesc.innerHTML = result['desc']
         recipeInfoSwapButton.setAttribute("onclick", "saveChange(\""+recipeDay+"\", "+recipeId+")")
       }
 
       async function checkGeneratePlanType(planType){
         if (planType == "auto"){
+          if (!paramsContainer.classList.contains("d-none")){
+            paramsContainer.classList.add("d-none");
+          }
           const planData = new FormData()
           planData.append("planType", planType);
           const response = await fetch('/gen_new_meal_plan' ,{method:'POST', body : planData});
@@ -401,13 +423,20 @@
             if (dayOfTheWeek > 6){dayOfTheWeek = 0;}
           });
           generatedPlanList.innerHTML = listContent;
-          if (newPlanSubmit.classList.contains("invisible")){newPlanSubmit.classList.remove("invisible");}
+          if (newPlanSubmit.classList.contains("d-none")){newPlanSubmit.classList.remove("d-none");}
           newPlanSubmit.dataset.plan = JSON.stringify(newPlan);
           newPlanSubmit.setAttribute("onclick", "saveNewPlan()");
           //console.log(newPlan);
           //generate new meal plan automatically, with no user input
         }
         else if (planType == "param"){
+          if (paramsContainer.classList.contains("d-none")){
+            paramsContainer.classList.remove("d-none");
+            generatedPlanList.innerHTML = "";
+            if (!newPlanSubmit.classList.contains("d-none")){
+              newPlanSubmit.classList.add("d-none")
+            }
+          }
           //show form for parameter entry, then submit and generate meal plan based on params. 
         }
       }
@@ -425,10 +454,44 @@
         }
       }
       function clearNewMenuOffcanvas(){
-        console.log("triggered");
-        if (!newPlanSubmit.classList.contains("invisible")){newPlanSubmit.classList.add("invisible");}
+        if (!newPlanSubmit.classList.contains("d-none")){newPlanSubmit.classList.add("d-none");}
         generatedPlanList.innerHTML = "";
+        if (!paramsContainer.classList.contains("d-none")){
+          paramsContainer.classList.add("d-none");
+          for (let i = 0; i < paramSelects.length; i++)   {         
+            paramSelects[i].value = 1;
+          };
+        }
       }
+
+      function setDropdown(){
+        let selectContent = ""
+        let selectValue = "1"
+        paramsOptions.forEach(param => {
+          selectContent += "<option value='"+selectValue+"'>"+param+"</option>"
+          selectValue += 1
+        });
+        formContainerContent = "";
+        paramsArray = [];
+        weekday.forEach(day => {
+
+          paramsArray.push( '<label for="'+day+'Dropdown" class="form-label">'+day+' Parameter</label>\
+                                  <select id="'+day+'Dropdown" class="form-select param-selectors" aria-label="Default select example">\
+                                    '+selectContent+'\
+                                  </select>')
+            
+        });
+        
+        //set index of sunday (as sunday is the first day in the weekdays array, but don't want it first in params list)
+        sundayIndex = paramsArray.length +1
+        //move sunday input to the end of the parameter select array
+        paramsArray.splice(sundayIndex, 1, paramsArray.splice(0, 1));
+        //join the array together with whitespace and set it to variable
+        formContainerContent =  paramsArray.join('');
+        
+        formContainer.innerHTML = formContainerContent;
+      }
+
     </script>
   </body>
 

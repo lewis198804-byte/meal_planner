@@ -317,6 +317,7 @@ def analyze_recipe():
             'content': [
                 {'type': 'text', 'text': '''
                     Analyze this recipe photo. Extract as RAW JSON only with no formatting. 
+                    If no photo has been submitted, return RAW JSON with error stating no image submitted.
                     When describing the ingredients do not use commas within a single ingredient description as the ingredients will be split using comma as a seperator. 
                     When describing the recipe instructions use a full stop to seperate the different steps. DO NOT use any commas. String will be split using the full stop as a serperator. 
                     Any temperatures should be in celcius as i live in the UK. 

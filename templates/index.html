@@ -202,7 +202,7 @@
 
       
       const weekday = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
-      const paramsOptions = ["Any", "Batch Cook A", "Batch Cook B", "Meat Free", "Quick meal", "Fakeaway", "Vegetarian","Meaty"]
+      const paramsOptions = ["Any", "Batch Cook - A", "Batch Cook - B", "Batch Cook - C","Meat Free", "Quick meal", "Fakeaway", "Vegetarian","Meaty"]
 
       newMenuOffcanvas.addEventListener("hidden.bs.offcanvas", clearNewMenuOffcanvas)
 
@@ -505,10 +505,13 @@
         }
         const request = await fetch("/process_params", {method:'POST', body : paramFormData});
         const response = await request.json();
-
-        console.log(response)
+        
+        console.log(response['results'])
+        Object.entries(response['results']).forEach(([key, value]) => {
+          console.log(`${key}: ${value}`);
+        });
+        
       }
-
     </script>
   </body>
 

@@ -300,8 +300,9 @@ def save_new_plan():
 
     return {"success" : "ok"}
 
-@app.route("/del_recipe/<recipe_id>", methods=['POST'])
-def delete_recipe(recipe_id):
+@app.route("/del_recipe")
+def delete_recipe():
+    recipe_id = request.args.get('q', '').strip()
     con = sqlite3.connect("database.db")
     cur = con.cursor()
     cur.execute("DELETE FROM recipes WHERE id = ?", (recipe_id,))
@@ -350,13 +351,47 @@ def process_params():
     if request.form:
         #ditionary of recipes that have been pulled from db to pass to return
         grabbedRecipes = {}
+        #variables to hold batch cook recipe objects if they are set (following a batch cook tag search)
+        batchCookA = None
+        batchCookB = None
+        batchCookC = None
+        
         #ids of recipes already retrieved from db, to stop duplicate recipes in 1 plan
         retrievedRecipeIds = []
         # for each select form element execute the following code block
         for param in request.form:
-            #retrieve the search term and trun it into tag format to search db table with
+            batchCook = False
+            mealType = "single"
+            #retrieve the search term and turn it into tag format to search db table with
             searchTerm = request.form[param].strip('')
             searchTerm = '#'+searchTerm.lower().replace(" ","")
+
+            # check if the term is a batch cook and make checks to see if it's the first iteration of a batch cook
+            # if not the first iteration, set the grabbed recipe to the previously retrieved recipe object and 
+            # skip the rest of this for loop, else set the serach term and flag as a batch cook param search
+            if "batchcook" in  searchTerm:
+                mealType = "batch"
+                if batchCookA != None and "-a" in searchTerm:
+                    grabbedRecipes[param] = dict(batchCookA)
+                    grabbedRecipes[param]['mealType'] = mealType
+                    continue
+                elif batchCookB != None and "-b" in searchTerm:
+                    grabbedRecipes[param] = dict(batchCookB)
+                    grabbedRecipes[param]['mealType'] = mealType
+                    continue
+                elif batchCookC != None and "-c" in searchTerm:
+                    grabbedRecipes[param] = dict(batchCookC)
+                    grabbedRecipes[param]['mealType'] = mealType
+                    continue
+                else:
+                    #batch cook tag picked
+                    batchCookValue = searchTerm
+                    searchTerm = "batchcook"
+                    batchCook = True
+            
+            if "any" in searchTerm:
+                searchTerm = "#"
+                
             #count number of already retrieved recipe ids and insert appropriate number of placeholders            
             placeholders = ', '.join('?' * len(retrievedRecipeIds))
             query = f"SELECT * FROM recipes WHERE tags LIKE ? AND id NOT IN ({placeholders}) ORDER BY RANDOM() LIMIT 1"
@@ -366,23 +401,26 @@ def process_params():
             recipe_response = cur.fetchone()
             #if a recipe match has been found (matches tag search term and is not a duplicate already added)
             if recipe_response:
-               #set grabbed recipe dictionary ket to day column name (passed by the select form element) and recipe as value
-               grabbedRecipes[param] = dict(recipe_response)
-               #add recipe id to retrieved ids so duplicate is not selected
-               retrievedRecipeIds.append(recipe_response['id'])
-            else:
-                #if no recipe is found to match the search term or not enough recipes (as duplicates excluded)
-                grabbedRecipes[param] = {"result": "No recipe found to match tag"}
-    
-        return {"results": grabbedRecipes}
+                #if the batchcook flag is up, check which batch cook iteration it is and set the variable for that iteration
+                # so subsequent searches for the same batch cook iteration can automatically be set to the same recipe object
+                if batchCook:
+                    if "-a" in batchCookValue:
+                        batchCookA = recipe_response
+                    elif "-b" in batchCookValue:
+                        batchCookB = recipe_response
+                    elif "-c" in batchCookValue:
+                        batchCookC = recipe_response
 
-    
-    cur.execute("SELECT * FROM recipes WHERE id = ?", (recipe_id,))
-    recipe_response = cur.fetchone()
-    cur.execute("SELECT * FROM ingredients WHERE recipe_id = ?", (recipe_id,))
-    ingredients_response = cur.fetchall()
-    con.close()
-    return render_template("view_recipe.html", recipe_details = recipe_response,recipe_ingredients = ingredients_response)
+               #set grabbed recipe dictionary ket to day column name (passed by the select form element) and recipe as value
+                grabbedRecipes[param] = dict(recipe_response)
+                grabbedRecipes[param]['mealType'] = mealType
+                #add recipe id to retrieved ids so duplicate is not selected
+                retrievedRecipeIds.append(recipe_response['id'])
+            else:
+                    #if no recipe is found to match the search term or not enough recipes (as duplicates excluded)
+                    grabbedRecipes[param] = {"result": "No recipe found to match tag"}
+        con.close()
+        return {"results": grabbedRecipes}
 
 
 

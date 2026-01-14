@@ -125,13 +125,11 @@
 
         async function deleteRecipe(recipe_id){
             try {
-                const response = await fetch('/del_recipe/'+recipe_id, {
-                    method: 'POST'
-                });
+                const response = await fetch('/del_recipe?q='+recipe_id);
                 const del_response = await response
 
                 if (del_response.ok){
-                    console.log(response)
+                    //console.log(response)
                     loadRecipes()
                 }
             }

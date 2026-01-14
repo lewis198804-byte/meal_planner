@@ -148,13 +148,13 @@
             
             <div class="mt-3">
               <div id="paramsContainer" class="d-none">
-                <form>
+                <form id="paramsFormSubmit">
                   <div class="mb-3" id="formContainer">
                     
                     
                   </div>
                   
-                  <button type="submit" class="btn btn-primary">Submit</button>
+                  <button type="submit"   class="btn btn-primary">Submit</button>
                 </form>
               </div>
                 <div class="accordion" id="generatedPlanList">
@@ -190,13 +190,19 @@
       const generatedPlanList = document.getElementById("generatedPlanList")
       const newPlanSubmit = document.getElementById("newPlanSubmit")
       const newMenuOffcanvas = document.getElementById("newMenuOffcanvas")
+
       const paramsContainer = document.getElementById("paramsContainer")
       const formContainer = document.getElementById("formContainer")
       const paramSelects = document.getElementsByClassName("param-selectors")
+      const paramsFormSubmit = document.getElementById('paramsFormSubmit');
+      paramsFormSubmit.addEventListener('submit', function(event) {
+          event.preventDefault();
+          processParams();
+      });
 
       
       const weekday = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
-      const paramsOptions = ["Any", "Batch Cook A", "Batch Cook B", "Meat Free", "Quick meal", "Fakeaway", "Vegetarian"]
+      const paramsOptions = ["Any", "Batch Cook A", "Batch Cook B", "Meat Free", "Quick meal", "Fakeaway", "Vegetarian","Meaty"]
 
       newMenuOffcanvas.addEventListener("hidden.bs.offcanvas", clearNewMenuOffcanvas)
 
@@ -466,10 +472,8 @@
 
       function setDropdown(){
         let selectContent = ""
-        let selectValue = "1"
         paramsOptions.forEach(param => {
-          selectContent += "<option value='"+selectValue+"'>"+param+"</option>"
-          selectValue += 1
+          selectContent += "<option value='"+param+"'>"+param+"</option>"
         });
         formContainerContent = "";
         paramsArray = [];
@@ -490,6 +494,19 @@
         formContainerContent =  paramsArray.join('');
         
         formContainer.innerHTML = formContainerContent;
+      }
+
+      async function processParams(){
+        day_columns = ["monday_recipe_id","tuesdayrecipe_id","wednesday_recipe_id","thursday_recipe_id","friday_recipe_id","saturday_recipe_id","sunday_recipe_id",]
+
+        paramFormData = new FormData()
+        for (let i = 0; i < paramSelects.length; i++){
+          paramFormData.append(day_columns[i] , paramSelects[i].value);
+        }
+        const request = await fetch("/process_params", {method:'POST', body : paramFormData});
+        const response = await request.json();
+
+        console.log(response)
       }
 
     </script>

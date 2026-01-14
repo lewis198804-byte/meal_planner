@@ -98,6 +98,9 @@ def ai_recipe_add():
 
 @app.route("/save_ai_recipe", methods=['POST'])
 def save_ai_recipe():
+    saveType = request.form['saveType']
+
+    recipe_id = request.form['recipe_id']
     name = request.form['recipe_name']
     location = request.form['recipe_location']
     page = request.form['page_number']
@@ -113,6 +116,9 @@ def save_ai_recipe():
     if name == "" or ingredients == "" or location == "":
         error_text = "Error: missing required field!" 
 
+
+
+
     photo = request.files.get('recipe_photo')
     if photo and photo.filename:  # Real file check
         safe_name = secure_filename(photo.filename)  
@@ -121,8 +127,6 @@ def save_ai_recipe():
         filename = f"{unique_id}_{safe_name}"  # "a1b2c3d4_recipe.jpg"
         image_filename = filename
 
-
-        
         save_recipe_image(photo,f"static/recipe_images/{filename}")
 
     else:
@@ -131,26 +135,51 @@ def save_ai_recipe():
     if error_text != "":
          return jsonify({"ok": False, "error": error_text})
 
-    
-    cur.execute("INSERT INTO recipes (name,location,page_nu,instructions,difficulty,tags,photo_path,desc) VALUES (?,?,?,?,?,?,?,?)" ,(name, location, page,instructions,difficulty,tags,image_filename,description))
-    
-    recipe_id = cur.lastrowid
-    ingredients_strings = ingredients.split(",")
-    ingredients_list = []
-    
-    for item in ingredients_strings:
+#determine if this is an edit that is being saved 
+    if saveType == "edit":
+           
+        cur.execute("UPDATE recipes SET name = ?, location = ? ,page_nu = ?,instructions = ?,difficulty = ?,tags = ?,desc =? WHERE id = ?" ,(name, location, page,instructions,difficulty,tags,description,recipe_id))
+        cur.execute("DELETE FROM ingredients WHERE recipe_id = ?" ,(recipe_id,))
+        ingredients_strings = ingredients.split(",")
+        ingredients_list = []
         
-        if len(item.strip()) > 0:
-            this_ingredient = (item.strip(), recipe_id)
-            ingredients_list.append(this_ingredient)
-    
-    print(ingredients_list)
-       
-    cur.executemany("INSERT INTO ingredients (name,recipe_id) VALUES (?,?)" , ingredients_list)
+        for item in ingredients_strings:
+            
+            if len(item.strip()) > 0:
+                this_ingredient = (item.strip(), recipe_id)
+                ingredients_list.append(this_ingredient)
+        
+        print(ingredients_list)
+        
+        cur.executemany("INSERT INTO ingredients (name,recipe_id) VALUES (?,?)" , ingredients_list)
+        
+        if image_filename != None:
+            cur.execute("UPDATE recipes SET photo_path = ? WHERE id = ?" ,(image_filename,recipe_id))
 
-    con.commit()
-    con.close()
-    return jsonify({"ok": True, "success": "Recipe added succesfully!"})
+        con.commit()
+        con.close()
+        return jsonify({"ok": True, "success": "Recipe updated succesfully!"})
+#or a new recipe being saved
+    else:
+        cur.execute("INSERT INTO recipes (name,location,page_nu,instructions,difficulty,tags,photo_path,desc) VALUES (?,?,?,?,?,?,?,?)" ,(name, location, page,instructions,difficulty,tags,image_filename,description))
+    
+        recipe_id = cur.lastrowid
+        ingredients_strings = ingredients.split(",")
+        ingredients_list = []
+        
+        for item in ingredients_strings:
+            
+            if len(item.strip()) > 0:
+                this_ingredient = (item.strip(), recipe_id)
+                ingredients_list.append(this_ingredient)
+        
+        print(ingredients_list)
+        
+        cur.executemany("INSERT INTO ingredients (name,recipe_id) VALUES (?,?)" , ingredients_list)
+
+        con.commit()
+        con.close()
+        return jsonify({"ok": True, "success": "Recipe added succesfully!"})
 
 @app.route("/get_recipes", methods=['POST'])
 def get_recipes():
@@ -294,6 +323,52 @@ def view_recipe(recipe_id):
     con.close()
     return render_template("view_recipe.html", recipe_details = recipe_response,recipe_ingredients = ingredients_response)
 
+@app.route("/edit_recipe")
+def edit_recipe():
+    recipe_id = request.args.get('q', '').strip()
+    con = sqlite3.connect("database.db")
+    con.row_factory = sqlite3.Row
+    cur = con.cursor()
+    cur.execute("SELECT * FROM recipes WHERE id = ?", (recipe_id,))
+    recipe_response = cur.fetchone()
+    cur.execute("SELECT * FROM ingredients WHERE recipe_id = ?", (recipe_id,))
+    ingredients_response = cur.fetchall()
+    con.close()
+    ingredientsList = []
+    for ingredients in ingredients_response:
+        ingredientsList.append(ingredients['name'])
+    ingredientString = ', '.join(ingredientsList)
+    return render_template("edit_recipe.html", recipe_details = recipe_response,recipe_ingredients = ingredientString)
+
+
+@app.route("/process_params", methods=['POST'])
+def process_params():
+    con = sqlite3.connect("database.db")
+    con.row_factory = sqlite3.Row
+    cur = con.cursor()
+
+    if request.form:
+        grabbedRecipes = []
+        for param in request.form:
+            cur.execute("SELECT * FROM recipes WHERE tags LIKE ?", (f'%{param}%',))
+            recipe_response = cur.fetchone()
+            if recipe_response:
+                recipe_to_add = recipe_response
+            else:
+                recipe_to_add = "None found"
+
+            grabbedRecipes.append(recipe_to_add)
+    
+    return {"results": grabbedRecipes}
+
+    
+    cur.execute("SELECT * FROM recipes WHERE id = ?", (recipe_id,))
+    recipe_response = cur.fetchone()
+    cur.execute("SELECT * FROM ingredients WHERE recipe_id = ?", (recipe_id,))
+    ingredients_response = cur.fetchall()
+    con.close()
+    return render_template("view_recipe.html", recipe_details = recipe_response,recipe_ingredients = ingredients_response)
+
 
 
 @app.route('/analyze-recipe', methods=['POST'])
@@ -321,7 +396,7 @@ def analyze_recipe():
                     When describing the ingredients do not use commas within a single ingredient description as the ingredients will be split using comma as a seperator. 
                     When describing the recipe instructions use a full stop to seperate the different steps. DO NOT use any commas. String will be split using the full stop as a serperator. 
                     Any temperatures should be in celcius as i live in the UK. 
-                    Generate common sense tags for the recipe using context like included ingredients, vegetarian or meat, batch cook or single meal etc. Tags should be seperated by spaces, not commas
+                    Generate common sense tags for the recipe using context like included ingredients, vegetarian or meaty, batch cook or single meal, fakeaway etc. Tags should be seperated by spaces, not commas
                     For the description, generate a short synopsis of the recipe, no more than 100 characters long. 
                     Output will be read by python program:
                     {

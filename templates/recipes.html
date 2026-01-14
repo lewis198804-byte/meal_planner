@@ -97,13 +97,13 @@
                     contents += '\
                     <div class="col">\
                       <div class="card ">\
-                        <a href="/view_recipe/'+element[0]+'">\
+                        <a href="/view_recipe?q='+element[0]+'">\
                         <img src="/static/recipe_images/'+element[5]+'" class="card-img-top img-thumbnail" style="height: 200px; object-fit: cover;" alt="...">\
                         </a>\
                         <div class="card-body">\
                           <h5>'+element[1]+'</small></h5>\
                           <p class="small">'+element[2] + '. Pg:'+element[3]+'</p>\
-                          <p><a href="/view_recipe/'+element[0]+'" class="btn btn-primary">View Recipe</a></p>\
+                          <p><a href="/view_recipe?q='+element[0]+'" class="btn btn-primary">View Recipe</a></p>\
                           <p><a href="" class="btn btn-light btn-sm" style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;" data-bs-toggle="modal" data-bs-target="#deleteModal" onclick="openDeleteModal('+element[0]+')">Delete Recipe</a> <a class="btn btn-light btn-sm" style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;"  href="/edit_recipe?q='+element[0]+'" >Edit Recipe</a></p>\
                         </div>\
                       </div>\

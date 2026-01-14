@@ -261,18 +261,18 @@
                 meal_plan_contents += '\
                 <div class="col ">\
                   <div class="card '+highlight_today+' mt-4 position-relative">\
-                      <a href="/view_recipe/'+recipe['id']+'" >\
+                      <a href="/view_recipe?q='+recipe['id']+'" >\
                     <img onload="setLoaded()" src="/static/recipe_images/'+recipe['photo_path']+'" class="recipe-img card-img-top img-thumbnail" style="height: 150px; width:100%; object-fit: cover;" alt="...">\
                     </a>\
                     <div class="" style="position:absolute;top:20px;right:20px;">\
-                        <a href="/view_recipe/'+recipe['id']+'" onclick="setRecipeDayToChange(\''+day+'\')" class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#changeRecipeModal">Change</a><br>\
+                        <a href="/view_recipe?q='+recipe['id']+'" onclick="setRecipeDayToChange(\''+day+'\')" class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#changeRecipeModal">Change</a><br>\
                       </div>\
                     <div class="card-body">\
                     '+today_badge+'\
                       <h3 class="text-center">'+recipe_day_name+'</h3>\
                       <p class="text-center">'+recipe['name']+'</p>\
                       <div class="flex">\
-                      <a href="/view_recipe/'+recipe['id']+'" class="btn btn-primary">View Recipe</a><br>\
+                      <a href="/view_recipe?q='+recipe['id']+'" class="btn btn-primary">View Recipe</a><br>\
                       </div>\
                     </div>\
                   </div>\
@@ -465,7 +465,7 @@
         if (!paramsContainer.classList.contains("d-none")){
           paramsContainer.classList.add("d-none");
           for (let i = 0; i < paramSelects.length; i++)   {         
-            paramSelects[i].value = 1;
+            paramSelects[i].value = "Any";
           };
         }
       }

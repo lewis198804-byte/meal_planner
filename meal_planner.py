@@ -100,7 +100,6 @@ def ai_recipe_add():
 def save_ai_recipe():
     saveType = request.form['saveType']
 
-    recipe_id = request.form['recipe_id']
     name = request.form['recipe_name']
     location = request.form['recipe_location']
     page = request.form['page_number']
@@ -137,7 +136,8 @@ def save_ai_recipe():
 
 #determine if this is an edit that is being saved 
     if saveType == "edit":
-           
+
+        recipe_id = request.form['recipe_id']
         cur.execute("UPDATE recipes SET name = ?, location = ? ,page_nu = ?,instructions = ?,difficulty = ?,tags = ?,desc =? WHERE id = ?" ,(name, location, page,instructions,difficulty,tags,description,recipe_id))
         cur.execute("DELETE FROM ingredients WHERE recipe_id = ?" ,(recipe_id,))
         ingredients_strings = ingredients.split(",")
@@ -310,8 +310,9 @@ def delete_recipe(recipe_id):
     con.close()
     return "deleted"
 
-@app.route("/view_recipe/<recipe_id>", methods=['GET'])
-def view_recipe(recipe_id):
+@app.route("/view_recipe")
+def view_recipe():
+    recipe_id = request.args.get('q','').strip()
     print(recipe_id)
     con = sqlite3.connect("database.db")
     con.row_factory = sqlite3.Row
@@ -346,20 +347,34 @@ def process_params():
     con = sqlite3.connect("database.db")
     con.row_factory = sqlite3.Row
     cur = con.cursor()
-
     if request.form:
-        grabbedRecipes = []
+        #ditionary of recipes that have been pulled from db to pass to return
+        grabbedRecipes = {}
+        #ids of recipes already retrieved from db, to stop duplicate recipes in 1 plan
+        retrievedRecipeIds = []
+        # for each select form element execute the following code block
         for param in request.form:
-            cur.execute("SELECT * FROM recipes WHERE tags LIKE ?", (f'%{param}%',))
+            #retrieve the search term and trun it into tag format to search db table with
+            searchTerm = request.form[param].strip('')
+            searchTerm = '#'+searchTerm.lower().replace(" ","")
+            #count number of already retrieved recipe ids and insert appropriate number of placeholders            
+            placeholders = ', '.join('?' * len(retrievedRecipeIds))
+            query = f"SELECT * FROM recipes WHERE tags LIKE ? AND id NOT IN ({placeholders}) ORDER BY RANDOM() LIMIT 1"
+            # set params for db query
+            params = (f'%{searchTerm}%',) + tuple(retrievedRecipeIds)
+            cur.execute(query, params)
             recipe_response = cur.fetchone()
+            #if a recipe match has been found (matches tag search term and is not a duplicate already added)
             if recipe_response:
-                recipe_to_add = recipe_response
+               #set grabbed recipe dictionary ket to day column name (passed by the select form element) and recipe as value
+               grabbedRecipes[param] = dict(recipe_response)
+               #add recipe id to retrieved ids so duplicate is not selected
+               retrievedRecipeIds.append(recipe_response['id'])
             else:
-                recipe_to_add = "None found"
-
-            grabbedRecipes.append(recipe_to_add)
+                #if no recipe is found to match the search term or not enough recipes (as duplicates excluded)
+                grabbedRecipes[param] = {"result": "No recipe found to match tag"}
     
-    return {"results": grabbedRecipes}
+        return {"results": grabbedRecipes}
 
     
     cur.execute("SELECT * FROM recipes WHERE id = ?", (recipe_id,))

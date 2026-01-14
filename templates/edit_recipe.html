@@ -53,7 +53,7 @@
                     <div>
                         <nav aria-label="breadcrumb">
                             <ol class="breadcrumb">
-                                <li class="breadcrumb-item"><a href="/view_recipe/{{recipe_details['id']}}">{{recipe_details['name']}}</a></li>
+                                <li class="breadcrumb-item"><a href="/view_recipe?q={{recipe_details['id']}}">{{recipe_details['name']}}</a></li>
                                 <li class="breadcrumb-item active" aria-current="page"> Edit</li>
                             </ol>
                         </nav>
@@ -127,7 +127,7 @@
                                     <div class="mb-3 mx-auto text-center">
                                         <label class="form-label" for="description">Description (100 chars)</label>
                                         <textarea class="form-control w-100" style="height:10em; width:20em" 
-                                                name="description" id="description" aria-describedby="description-help">{{recipe_details['description']}}</textarea>
+                                                name="description" id="description" aria-describedby="description-help">{{recipe_details['desc']}}</textarea>
                                         <div id="description-help" class="form-text">Description of the recipe</div>
                                     </div>
                                     <div class="mb-3 mx-auto text-center" >
@@ -136,8 +136,16 @@
                                     </div>
                                     <div class="mb-3 mx-auto text-center" >
                                         <label for="difficulty_range" class="form-label">Difficulty</label>
-                                        <input type="range" class="form-range w-100" step="1" min="0" max="2" value="0" id="difficulty_range">
-                                        <output for="difficulty_range" id="rangeValue"></output>
+                                        {% set difficultyValue = 0 %}
+                                        {% if recipe_details['difficulty'] == 'Easy' %}
+                                            {% set difficultyValue = 0 %}
+                                        {% elif recipe_details['difficulty'] == 'Medium' %}
+                                            {% set difficultyValue = 1 %}
+                                        {% else %}
+                                            {% set difficultyValue = 2 %}
+                                        {% endif %}
+                                        <input type="range" class="form-range w-100" step="1" min="0" max="2" value="{{difficultyValue}}" id="difficulty_range">
+                                        <output for="difficulty_range" id="rangeValue"> {{recipe_details['difficulty']}}</output>
                                     </div>
                                     <div class="mb-3 mx-auto text-center" >
                                         <label class="form-label" for="tags">Tags</label>
@@ -172,9 +180,7 @@
    
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
     <script>
-        let recipe_name_field = "";
-        let location_field = "";
-        let ingredients_field = "";
+        
         const alert_field = document.getElementById("alert_field");
                 
         const page_number = document.getElementById("page_number");
@@ -193,13 +199,12 @@
         const spinner_div = document.getElementById('spinner');
         const save_button = document.getElementById('save_button')
         const tags = document.getElementById("tags")
-        const recipe_id = {{ recipe_details['id'] }};
+        const recipe_id = "{{ recipe_details['id'] }}";
         
         save_button.disabled = true;
         spinner_div.hidden = true;
         checkRequired()
 
-        rangeOutput.textContent = "Easy";
         let difficulty_text = "Easy"
         rangeInput.addEventListener('input', function() {
             if (this.value == 0){
@@ -224,11 +229,15 @@
             }
         }
         function checkRequired(){
-            if (recipe_name_field != "" & location_field != "" & ingredients_field != ""){
+            if (recipe_name.value != "" & recipe_location.value != "" & ingredients.value != ""){
                 save_button.disabled = false;
+                setFieldColour(recipe_name);
+                setFieldColour(recipe_location);
+                setFieldColour(ingredients);
             }
             else{
                 save_button.disabled = true;
+                console.log()
             }
         }
         

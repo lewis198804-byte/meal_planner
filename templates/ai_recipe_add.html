@@ -293,6 +293,7 @@
             toggleErrorAlert("off")
             const formData = new FormData();
             
+            formData.append("saveType", "new");
             formData.append("recipe_name", name_field.value);
             formData.append("recipe_location", recipe_location.value);
             formData.append("page_number", page_number.value);

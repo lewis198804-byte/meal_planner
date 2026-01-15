@@ -45,6 +45,9 @@
                   <li class="nav-item" >
                     <a class="nav-link" href="/ai_recipe_add">AI Add</a>
                   </li>
+                  <li class="nav-item" >
+                    <a class="nav-link" href="/shopping_list">Shopping List</a>
+                  </li>
                   <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                       Dev Tools
@@ -153,8 +156,9 @@
                     
                     
                   </div>
-                  
-                  <button type="submit"   class="btn btn-primary">Submit</button>
+                  <div class="mt-2 text-center p-3">
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                  </div>
                 </form>
               </div>
                 <div class="accordion" id="generatedPlanList">
@@ -163,7 +167,7 @@
                 
               
               <div class="mt-2 text-center p-3">
-                <button id="newPlanSubmit" class="btn btn-primary d-none" data-bs-dismiss="offcanvas">Looks Good!</button>
+                <button id="newPlanSubmit" class="btn btn-primary d-none" data-bs-dismiss="offcanvas" onclick="saveNewPlan()">Looks Good!</button>
               </div>
             </div>
           </div>
@@ -431,11 +435,15 @@
           generatedPlanList.innerHTML = listContent;
           if (newPlanSubmit.classList.contains("d-none")){newPlanSubmit.classList.remove("d-none");}
           newPlanSubmit.dataset.plan = JSON.stringify(newPlan);
-          newPlanSubmit.setAttribute("onclick", "saveNewPlan()");
+          
           //console.log(newPlan);
           //generate new meal plan automatically, with no user input
         }
         else if (planType == "param"){
+          if (newPlanSubmit.dataset.plan != ""){
+            delete newPlanSubmit.dataset.plan
+          }
+
           if (paramsContainer.classList.contains("d-none")){
             paramsContainer.classList.remove("d-none");
             generatedPlanList.innerHTML = "";
@@ -460,6 +468,7 @@
         }
       }
       function clearNewMenuOffcanvas(){
+        delete newPlanSubmit.dataset.plan
         if (!newPlanSubmit.classList.contains("d-none")){newPlanSubmit.classList.add("d-none");}
         generatedPlanList.innerHTML = "";
         if (!paramsContainer.classList.contains("d-none")){
@@ -497,7 +506,7 @@
       }
 
       async function processParams(){
-        day_columns = ["monday_recipe_id","tuesdayrecipe_id","wednesday_recipe_id","thursday_recipe_id","friday_recipe_id","saturday_recipe_id","sunday_recipe_id",]
+        day_columns = ["monday","tuesday","wednesday","thursday","friday","saturday","sunday"]
 
         paramFormData = new FormData()
         for (let i = 0; i < paramSelects.length; i++){
@@ -505,12 +514,47 @@
         }
         const request = await fetch("/process_params", {method:'POST', body : paramFormData});
         const response = await request.json();
+
         
-        console.log(response['results'])
+        listContent = "";
+        const newPlan = new Object()
         Object.entries(response['results']).forEach(([key, value]) => {
-          console.log(`${key}: ${value}`);
+          if (value['mealType'] == "batch"){
+            mealBadge = "<span class='badge text-bg-success ms-1'> Batch meal</span>"
+          }
+          else{
+            mealBadge = "";
+          }
+
+          listContent +='<div class="accordion-item">\
+                    <h2 class="accordion-header">\
+                      <button class="accordion-button collapsed" aria-expanded="false" type="button" data-bs-toggle="collapse" data-bs-target="#'+key+'Item" aria-expanded="true" aria-controls="collapseOne">  \
+                        '+value['name']+'  <span class="badge badge-sm text-bg-warning ms-1"> '+capitalizeFirstLetter(key)+'</span>'+mealBadge+'\
+                      </button>\
+                    </h2>\
+                    <div id="'+key+'Item" class="accordion-collapse collapse " data-bs-parent="#generatedPlanList">\
+                      <div class="accordion-body">\
+                        <div class="container">\
+                          <div class="row row-col-2">\
+                            <div class="col">\
+                              <img src="/static/recipe_images/'+value["photo_path"]+'" class="card-img-top img-thumbnail img-fluid" style="height: 150px; object-fit: cover;" alt="...">\
+                            </div>\
+                            <div class="col">\
+                              <p> '+value["desc"]+'</p>\
+                              <p class="small">'+value["tags"]+'</p>\
+                            </div>\
+                          </div>\
+                          </div>\
+                      </div>\
+                    </div>\
+                  </div>'
+          newPlan[key+"_recipe_id"] = value['id'];
+
         });
-        
+        generatedPlanList.innerHTML = listContent
+        if (newPlanSubmit.classList.contains("d-none")){newPlanSubmit.classList.remove("d-none");}
+        newPlanSubmit.dataset.plan = JSON.stringify(newPlan);
+        newPlanSubmit.setAttribute("onclick", "saveNewPlan()");
       }
     </script>
   </body>

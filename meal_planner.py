@@ -14,6 +14,7 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 load_dotenv()
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 app = Flask(__name__)
+app.json.sort_keys = False
 
 def database_con(query):
     con = sqlite3.connect("database.db")
@@ -190,6 +191,11 @@ def get_recipes():
     con.close()
     return response
 
+@app.route("/shopping_list")
+def shopping_list():
+
+    return render_template("shopping_list.html")
+
 @app.route("/search_recipes")
 def search_recipes():
     search_term = request.args.get('q', '').strip()
@@ -365,7 +371,7 @@ def process_params():
             #retrieve the search term and turn it into tag format to search db table with
             searchTerm = request.form[param].strip('')
             searchTerm = '#'+searchTerm.lower().replace(" ","")
-
+            
             # check if the term is a batch cook and make checks to see if it's the first iteration of a batch cook
             # if not the first iteration, set the grabbed recipe to the previously retrieved recipe object and 
             # skip the rest of this for loop, else set the serach term and flag as a batch cook param search
@@ -418,10 +424,70 @@ def process_params():
                 retrievedRecipeIds.append(recipe_response['id'])
             else:
                     #if no recipe is found to match the search term or not enough recipes (as duplicates excluded)
-                    grabbedRecipes[param] = {"result": "No recipe found to match tag"}
+                    grabbedRecipes[param] = {
+                        "result": "No recipe found to match tag", 
+                        "name": "No recipe found",
+                        "desc": "No recipe matching the search term could be found. Maybe add some more tags or recipes?"
+                        }
         con.close()
         return {"results": grabbedRecipes}
 
+@app.route("/generate_shopping_list")
+def generate_shopping_list():
+
+    con = sqlite3.connect("database.db")
+    con.row_factory = sqlite3.Row
+    cur = con.cursor()
+    cur.execute("SELECT monday_recipe_id , tuesday_recipe_id , wednesday_recipe_id , thursday_recipe_id , friday_recipe_id , saturday_recipe_id , sunday_recipe_id FROM meal_plans WHERE current_plan = 1")
+    result = cur.fetchone()
+    
+    ingredients = {}
+    for row in result:
+        cur.execute("SELECT name FROM recipes WHERE id = ?", (row,))
+        nameResult = cur.fetchone()
+        recipeName = nameResult['name'].strip()
+        thisRecipeIng = []
+        cur.execute("SELECT name FROM ingredients WHERE recipe_id = ?", (row,))
+        ingResult = cur.fetchall()
+        for ingredient in ingResult:
+            thisRecipeIng.append(ingredient['name'])
+            ingredients[recipeName] = (thisRecipeIng)
+
+    print(ingredients)
+    return {"result" : ingredients}
+    headers = {
+        'Authorization': f'Bearer {OPENAI_API_KEY}',
+        'Content-Type': 'application/json'
+    }
+
+    payload = {
+    'model': 'gpt-4o-mini',
+    'messages': [
+        {
+            'role': 'system',
+            'content': '''You are a shopping list generator. 
+            Analyze all ingredients mentioned and create a clean, organized shopping list.
+            Group similar items (e.g. "2 onions, 1 garlic bulb" → "Onions, garlic").
+            Use bullet points or numbered list. Only list ingredients—nothing else.'''
+        },
+        {
+            'role': 'user', 
+            'content': f'''Create a shopping list from these ingredients:
+            {ingredients_string}'''
+        }
+    ],
+    'temperature': 0.1,  # Low for consistent lists
+    'max_tokens': 500
+    }
+
+    response = requests.post('https://api.openai.com/v1/chat/completions', 
+                           headers=headers, json=payload)
+    
+    if response.status_code != 200:
+        return jsonify({'error': response.json()}), 500
+    
+    result = response.json()['choices'][0]['message']['content']
+    return jsonify({'list': result})
 
 
 @app.route('/analyze-recipe', methods=['POST'])

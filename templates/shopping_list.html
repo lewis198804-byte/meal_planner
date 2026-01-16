@@ -1,11 +1,12 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-bs-theme="light">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Bootstrap demo</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
 </head>
   <body>
     <section>
@@ -53,13 +54,14 @@
         <div class="container">
           <div class="row row-cols-12" >
             <div class="col text-center">
-              <p>Use AI to generate a shopping list for the current meal plan!</p>
-              <button class="btn btn-primary" onclick="generateList()">Generate New List</button>
+              <p>This weeks ingredients all in one place! </p>
             </div>
           </div>
           <div class="row">
-            <div class="col" id="result_container">
+            <div class="col" >
+              <div class="accordion" id="result_container" >
               <!--insert generated shopping list here via javascript-->
+              </div>
             </div>
           </div>
           
@@ -72,24 +74,62 @@
     <script>
 
           const resultsContainer = document.querySelector("#result_container");
+          showList()
 
-
-        async function generateList(){
+        async function showList(){
           const response = await fetch("/generate_shopping_list");
           const result = await response.json()
+          let listContent =""
+          let recipeNumber = 1
+          for (const [key, value] of Object.entries(result['result'])) {
+            ingCount = value.length;
+            listContent += '<div class="accordion-item">\
+                              <h2 class="accordion-header">\
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#accordian-item-'+recipeNumber+'" aria-expanded="false" aria-controls="flush-collapseOne">\
+                                '+key+'  \
+                                <span class="badge bg-info position-absolute" data-count-for="'+recipeNumber+'-list" style="right:60px;"> '+ingCount+'</span>\
+                              </button>\
+                            </h2>\
+                            <div id="accordian-item-'+recipeNumber+'" class="accordion-collapse collapse" data-bs-parent="#result_container">\
+                              <div class="accordion-body">\
+                                <ul class="list-group" id="'+recipeNumber+'-list">'
 
-
-          console.log(result['result'])
-          ingredientsHolder = ""
-          Object.entries(result.result).forEach(([recipeName, ingredients]) => {
-            console.log(`${recipeName}:`, ingredients);
-            ingredientsHolder += "<p>"+recipeName+"</p>";
+            value.forEach(element => {
+              listContent += "<li class='list-group-item list-group-item-action animate__animated' onclick='highlightItem()'>"+element+"</li> ";
+            });
+            listContent += "</ul></div></div></div>"
+            recipeNumber++
             
-          });
-          resultsContainer.innerHTML = ingredientsHolder;
+          }
+          
+          resultsContainer.innerHTML = listContent;
+          
+        }
+        function countElements(listContainer){
+          console.log(listContainer)
           
         }
 
+        function highlightItem(){
+          itemToHighlight = event.target;
+          if (itemToHighlight.classList.contains("text-decoration-line-through")){
+            itemToHighlight.classList.remove("text-decoration-line-through", "list-group-item-info","animate__pulse");
+            const listId = itemToHighlight.parentElement.id
+            countBadge = document.querySelector('[data-count-for="'+listId+'"]')
+            countBadge.innerText =  (parseInt(countBadge.innerText) + 1).toString()
+          }
+          else{
+            itemToHighlight.style.setProperty('--animate-duration', '0.5s');
+            itemToHighlight.classList.add("text-decoration-line-through", "list-group-item-info","animate__pulse");
+            
+            const listId = itemToHighlight.parentElement.id
+            countBadge = document.querySelector('[data-count-for="'+listId+'"]')
+            countBadge.innerText =  (parseInt(countBadge.innerText) - 1).toString()
+          }
+          
+          
+
+        }
    
     </script>
 

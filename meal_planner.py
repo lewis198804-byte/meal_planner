@@ -453,8 +453,9 @@ def generate_shopping_list():
             thisRecipeIng.append(ingredient['name'])
             ingredients[recipeName] = (thisRecipeIng)
 
-    print(ingredients)
+    #print(ingredients)
     return {"result" : ingredients}
+    ingredients_str = json.dumps(ingredients, indent=2)
     headers = {
         'Authorization': f'Bearer {OPENAI_API_KEY}',
         'Content-Type': 'application/json'
@@ -464,20 +465,28 @@ def generate_shopping_list():
     'model': 'gpt-4o-mini',
     'messages': [
         {
+            'response_format': {'type': 'html elements'},
             'role': 'system',
             'content': '''You are a shopping list generator. 
             Analyze all ingredients mentioned and create a clean, organized shopping list.
             Group similar items (e.g. "2 onions, 1 garlic bulb" → "Onions, garlic").
+            Seperate ingredients with headings for the type of ingredient e.g. Meats, Condiments, Vegetables, Dairy etc
             Use bullet points or numbered list. Only list ingredients—nothing else.'''
         },
         {
             'role': 'user', 
-            'content': f'''Create a shopping list from these ingredients:
-            {ingredients_string}'''
+            'content': f''' Your response must be pure HTML. the return
+             content should be enclosed in <li></li> tags. HEadings list tags should have a class of heading.
+             No introductory text.
+            The provided ingredients object consists of a list of key value pairs
+            with the recipe name being the key and the value being a list of ingredients for that recipe. 
+            Create a shopping list from these ingredients:
+            {ingredients_str}
+            Output ONLY valid HTML. Output will be read by python program'''
         }
     ],
     'temperature': 0.1,  # Low for consistent lists
-    'max_tokens': 500
+    'max_tokens': 1200
     }
 
     response = requests.post('https://api.openai.com/v1/chat/completions', 
@@ -487,7 +496,8 @@ def generate_shopping_list():
         return jsonify({'error': response.json()}), 500
     
     result = response.json()['choices'][0]['message']['content']
-    return jsonify({'list': result})
+    print(result)
+    return {"result" : result}
 
 
 @app.route('/analyze-recipe', methods=['POST'])

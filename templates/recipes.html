@@ -51,12 +51,18 @@
     </section>
     <section>
         <div class="container">
-          <div class="row row-cols-1 row-cols-sm-2 row-cols-md-5 justify-content-md-center gy-3" id="recipe_showcase">
-          
 
-            
+          <div class=" text-end row row-col-12 mb-3" > 
+                      <div class="col">
+                        <a class=" btn btn-small btn-light" data-bs-toggle="modal" data-bs-target="#recipeSearchModal">Search</a> 
+                      </div>
+                  </div>
+          <div class="row row-cols-1 row-cols-sm-2 row-cols-md-5 justify-content-md-center gy-3" id="recipe_showcase">
+          <!--Insert recipes on load via javascript-->
           </div>
         </div>
+
+
         <!-- Modal -->
         <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
@@ -75,13 +81,76 @@
             </div>
         </div>
         </div>
+
+        <!--Recipe search Modal-->
+        <div class="modal fade " id="recipeSearchModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h1 class="modal-title fs-5" id="staticBackdropLabel">Recipe Search</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="p-3">
+                <div class="form-floating mb-3">
+                  <input type="email" class="form-control" id="searchInput" placeholder="name@example.com">
+                  <label for="searchInput">Recipe Search</label>
+                </div>
+              </div>
+              <div class="modal-body">
+                <ul class="list-group" id="search_results_list">
+                  <!--Insert search results here via Javascript-->
+                </ul>
+              </div>
+              <div class="modal-footer">
+                <button type="button" onclick="clearSearchModal()" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!--Recipe info Modal-->
+        <div class="modal fade " id="recipeDetailsModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">          
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+              <div class="modal-header" id="recipeInfoHeader">
+                
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                <div class="container">
+                  <div class="row row-col-2">
+                    <div class="col" id="recipeInfoImage">
+                      <!--Insert recipe photo here with javascript-->
+                    </div>
+                    <div class="col" id="recipeInfoDesc">
+                      <p>Recipe details</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="modal-footer" id="recipeInfoFooter">
+                
+              </div>
+            </div>
+          </div>
+        </div>
     </section>
    
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
   
     <script>
-        const recipe_showcase = document.getElementById("recipe_showcase")
-        const modal_delete_button = document.getElementById("modal_delete_button")
+      const recipe_showcase = document.getElementById("recipe_showcase")
+      const modal_delete_button = document.getElementById("modal_delete_button")
+
+      const searchInput = document.getElementById("searchInput");
+      const search_results_list = document.getElementById("search_results_list");
+
+      const recipeInfoHeader = document.getElementById("recipeInfoHeader");
+      const recipeInfoImage = document.getElementById("recipeInfoImage");
+      const recipeInfoDesc = document.getElementById("recipeInfoDesc");
+      const recipeInfoFooter = document.getElementById("recipeInfoFooter")
+      const viewRecipeLink = document.getElementById("viewRecipeLink");
+
       loadRecipes()
 
 
@@ -140,6 +209,89 @@
                 console.log(error)
             }
         }
+
+
+            // Waits for typing to pause before searching
+      function debounce(fn, delayMs) {
+        let timeoutId = null;
+        
+        return async function(...args) {
+          // Cancel previous timer
+          if (timeoutId) {
+            clearTimeout(timeoutId);
+          }
+          
+          // Wait for pause, then call fn
+          timeoutId = setTimeout(async () => {
+            await fn(...args);
+          }, delayMs);
+        };
+      }
+
+      // Usage with async/await
+      const debouncedSearch = debounce(async (searchTerm) => {
+        if (searchTerm == ""){
+          showResults([])
+        }
+        else{
+        const response = await fetch('/search_recipes?q='+encodeURIComponent(searchTerm)+'');
+        const results = await response.json();
+        showResults(results);
+        }
+      }, 500);
+
+      searchInput.addEventListener('input', (e) => {
+        debouncedSearch(e.target.value);
+      });
+
+
+      function clearSearchModal(){
+        searchInput.value = ""
+        search_results_list.innerHTML = ""
+        recipeInfoHeader.innerHTML = ""
+        recipeInfoImage.innerHTML = ""
+      }
+
+      function showResults(data){
+        
+        //console.log(data)
+        list_content = "";
+
+        if (data.length > 0){
+          data.forEach(element => {
+
+              list_content += '<li class="list-group-item d-flex justify-content-between align-items-start list-group-item-action">\
+              <div>'+element[1]+' </div>\
+              <div class="btn-group" role="group" aria-label="Basic example">\
+                <a class="btn btn-primary" href="view_recipe?q='+element[0]+'">View</a>\
+                <button class="btn btn-info" data-bs-target="#recipeDetailsModal" data-bs-toggle="modal"  onclick="getRecipeOverview(\''+element[0]+'\')">Info</button>\
+              </div></li>'
+            });
+        }
+        else {
+          list_content = '<li class="list-group-item">No recipes found</li>';
+        }
+
+        search_results_list.innerHTML = list_content;
+        
+      }
+
+      async function getRecipeOverview(recipeId){
+
+        const response = await fetch("/get_recipe_overview/"+recipeId,{method : 'GET'});
+        const result = await response.json()
+        recipeInfoHeader.innerHTML = '<h1 class="modal-title fs-5" id="exampleModalToggleLabel" id="recipeInfoHeader">'+result['name']+'</h1>';
+        recipeInfoImage.innerHTML =  '<img src="/static/recipe_images/'+result['photo_path']+'" class="card-img-top img-thumbnail img-fluid" style="height: 150px; object-fit: cover;" alt="...">'
+        recipeInfoDesc.innerHTML = result['desc']
+        recipeInfoFooter.innerHTML = '<a href="/view_recipe?q='+recipeId+'" id="viewRecipeLink" class="btn btn-primary">View</a>\
+                <button class="btn btn-primary" data-bs-target="#recipeSearchModal" data-bs-toggle="modal">Back</button>' 
+      }
+
+
+
+
+
+
     </script>
 
 

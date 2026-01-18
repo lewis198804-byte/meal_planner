@@ -67,7 +67,12 @@
     <section>
         <div class="container" >
           
-                    <div class=" text-end row row-col-12" > <div class="col"><a class=" btn btn-small btn-light"  data-bs-toggle="offcanvas" data-bs-target="#newMenuOffcanvas" aria-controls="newMenuOffcanvas"> New plan </a> </div></div>
+                  <div class=" text-end row row-col-12" > 
+                      <div class="col">
+                        <a class=" btn btn-small btn-light" data-bs-toggle="modal" data-bs-target="#changeRecipeModal" onclick="setSearchModal(null, 'true')">Search</a> 
+                        <a class=" btn btn-small btn-light" data-bs-toggle="offcanvas" data-bs-target="#newMenuOffcanvas" aria-controls="newMenuOffcanvas"> New plan </a> 
+                      </div>
+                  </div>
           <div class="row row-cols-2 row-cols-md-3 justify-content-center" id="meal_plan_showcase">
 
           </div>
@@ -115,15 +120,13 @@
                       <!--Insert recipe photo here with javascript-->
                     </div>
                     <div class="col" id="recipeInfoDesc">
-                      <p>recipe details</p>
+                      <p>Recipe details</p>
                     </div>
                   </div>
                 </div>
               </div>
-              <div class="modal-footer">
-                <button class="btn btn-primary" data-bs-target="#changeRecipeModal" data-bs-toggle="modal">Back</button>
-                <button class="btn btn-primary" id="recipeInfoSwapButton" onclick="saveChange()" data-bs-toggle="modal">Swap In!</button>
- 
+              <div class="modal-footer" id="recipeInfoFooter">
+                
               </div>
             </div>
           </div>
@@ -187,18 +190,21 @@
       const changeRecipeModal = document.getElementById("changeRecipeModal");
 
       const recipeInfoHeader = document.getElementById("recipeInfoHeader");
-      const recipeInfoImage = document.getElementById("recipeInfoImage")
-      const recipeInfoSwapButton = document.getElementById("recipeInfoSwapButton")
-      const recipeInfoDesc = document.getElementById("recipeInfoDesc")
+      const recipeInfoImage = document.getElementById("recipeInfoImage");
+      const recipeInfoSwapButton = document.getElementById("recipeInfoSwapButton");
+      const recipeInfoDesc = document.getElementById("recipeInfoDesc");
+      const recipeInfoFooter = document.getElementById("recipeInfoFooter")
+      const viewRecipeLink = document.getElementById("viewRecipeLink");
 
-      const generatedPlanList = document.getElementById("generatedPlanList")
-      const newPlanSubmit = document.getElementById("newPlanSubmit")
-      const newMenuOffcanvas = document.getElementById("newMenuOffcanvas")
+      const generatedPlanList = document.getElementById("generatedPlanList");
+      const newPlanSubmit = document.getElementById("newPlanSubmit");
+      const newMenuOffcanvas = document.getElementById("newMenuOffcanvas");
 
-      const paramsContainer = document.getElementById("paramsContainer")
-      const formContainer = document.getElementById("formContainer")
-      const paramSelects = document.getElementsByClassName("param-selectors")
+      const paramsContainer = document.getElementById("paramsContainer");
+      const formContainer = document.getElementById("formContainer");
+      const paramSelects = document.getElementsByClassName("param-selectors");
       const paramsFormSubmit = document.getElementById('paramsFormSubmit');
+
       paramsFormSubmit.addEventListener('submit', function(event) {
           event.preventDefault();
           processParams();
@@ -269,7 +275,7 @@
                     <img onload="setLoaded()" src="/static/recipe_images/'+recipe['photo_path']+'" class="recipe-img card-img-top img-thumbnail" style="height: 150px; width:100%; object-fit: cover;" alt="...">\
                     </a>\
                     <div class="" style="position:absolute;top:20px;right:20px;">\
-                        <a href="/view_recipe?q='+recipe['id']+'" onclick="setRecipeDayToChange(\''+day+'\')" class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#changeRecipeModal">Change</a><br>\
+                        <a href="/view_recipe?q='+recipe['id']+'" onclick="setSearchModal(\''+day+'\',\'false\')" class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#changeRecipeModal">Change</a><br>\
                       </div>\
                     <div class="card-body">\
                     '+today_badge+'\
@@ -335,8 +341,17 @@
       });
 
 
-       function setRecipeDayToChange(dayId){
-        changeRecipeModal.setAttribute("data-recipe-day", ""+dayId+"")
+       function setSearchModal(dayId = null, trigger = ""){
+        console.log(dayId)
+        if (dayId != null){
+          changeRecipeModal.setAttribute("data-recipe-day", ""+dayId+"")
+        }
+        if (trigger == "false"){
+          changeRecipeModal.dataset.search_recipes = "true"
+        }
+        else if (trigger == "true" ){
+          changeRecipeModal.dataset.search_recipes = "false"
+        }
       }
      
       async function saveChange(recipeDayId, newRecipeId){
@@ -364,11 +379,18 @@
 
         if (data.length > 0){
           data.forEach(element => {
-            list_content += '<li class="list-group-item d-flex justify-content-between align-items-start list-group-item-action">\
+            if (changeRecipeModal.dataset.search_recipes == "true"){
+              swapButton = '<button onclick="saveChange(\''+recipeDay+'\',\''+element[0]+'\')" data-bs-dismiss="modal" class="btn btn-primary btn-sm">Swap</button> </li>'
+            }
+            else{
+              swapButton = ""
+            }
+              list_content += '<li class="list-group-item d-flex justify-content-between align-items-start list-group-item-action">\
               <div>'+element[1]+' </div>\
               <div class="btn-group" role="group" aria-label="Basic example">\
+                <a class="btn btn-primary" href="view_recipe?q='+element[0]+'">View</a>\
                 <button class="btn btn-info" data-bs-target="#swapRecipeDetailsModal" data-bs-toggle="modal" href="#offcanvasExample" onclick="getRecipeOverview(\''+element[0]+'\')">Info</button>\
-                <button onclick="saveChange(\''+recipeDay+'\',\''+element[0]+'\')" data-bs-dismiss="modal" class="btn btn-primary btn-sm">Swap</button> </li>\
+              '+swapButton+'\
               </div>'
             });
         }
@@ -381,13 +403,24 @@
       }
 
       async function getRecipeOverview(recipeId){
-        const recipeDay = changeRecipeModal.getAttribute("data-recipe-day")
+         const recipeDay = changeRecipeModal.getAttribute("data-recipe-day")
+
+        if (changeRecipeModal.dataset.search_recipes == "true"){
+             recipeInfoFooter.innerHTML =  '<a href="/view_recipe?q='+recipeId+'" id="viewRecipeLink" class="btn btn-primary">View</a>\
+                <button class="btn btn-primary" data-bs-target="#changeRecipeModal" data-bs-toggle="modal">Back</button>\
+                <button class="btn btn-primary" id="recipeInfoSwapButton" onclick="saveChange(\''+recipeDay+'\','+recipeId+')" data-bs-dismiss="modal">Swap In!</button>'
+ 
+            }
+            else{
+              recipeInfoFooter.innerHTML = '<a href="/view_recipe?q='+recipeId+'" id="viewRecipeLink" class="btn btn-primary">View</a>\
+                <button class="btn btn-primary" data-bs-target="#changeRecipeModal" data-bs-toggle="modal">Back</button>' 
+            }
         const response = await fetch("/get_recipe_overview/"+recipeId,{method : 'GET'});
         const result = await response.json()
         recipeInfoHeader.innerHTML = '<h1 class="modal-title fs-5" id="exampleModalToggleLabel" id="recipeInfoHeader">'+result['name']+'</h1>';
         recipeInfoImage.innerHTML =  '<img src="/static/recipe_images/'+result['photo_path']+'" class="card-img-top img-thumbnail img-fluid" style="height: 150px; object-fit: cover;" alt="...">'
         recipeInfoDesc.innerHTML = result['desc']
-        recipeInfoSwapButton.setAttribute("onclick", "saveChange(\""+recipeDay+"\", "+recipeId+")")
+        
       }
 
       async function checkGeneratePlanType(planType){

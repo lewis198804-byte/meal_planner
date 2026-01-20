@@ -182,19 +182,40 @@ def save_ai_recipe():
 
 @app.route("/get_recipes", methods=['POST'])
 def get_recipes():
-    if request.args.get('q','') == "all":
-        category = ""
-    elif request.args.get('q','') == "dessert":
-        category = "WHERE category = 'dessert'"
-    elif request.args.get('q','') == "dinner":
-        category = "WHERE category = 'dinner'"
-    elif request.args.get('q','') == "other":
-        category = "WHERE category = 'other'"
+    recipeParams = request.args.to_dict()
+    print(recipeParams)
+
+    
+
+
+    if recipeParams['category'] == "all":
+        category = " "
+    elif recipeParams['category']  == "dessert":
+        category = " WHERE category = 'dessert' "
+    elif recipeParams['category']  == "dinner":
+        category = " WHERE category = 'dinner' "
+    elif recipeParams['category']  == "other":
+        category = " WHERE category = 'other' "
     else:
-        category = ""
+        category = " "
+    
+    #pagination code starts
+    if "paginationId" in recipeParams:
+        if category == " ":
+            connector = "WHERE "
+        elif category != " ":
+            connector = "AND "
+
+        paginationQuery = connector+"id < "+recipeParams['paginationId']+" "
+        print(paginationQuery)
+    else:
+        paginationQuery = ""
+
     con = sqlite3.connect("database.db")
     cur = con.cursor()
-    cur.execute("SELECT * FROM recipes "+category+" ORDER BY id LIMIT 6")
+    selectQuery = "SELECT * FROM recipes"+category+""+paginationQuery+"ORDER BY id DESC LIMIT 3"
+    print(selectQuery)
+    cur.execute(selectQuery)
     response = cur.fetchall()
     con.close()
     return response

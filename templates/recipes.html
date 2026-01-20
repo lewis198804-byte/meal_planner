@@ -172,12 +172,12 @@
 
       const paginationContainer = document.getElementById("paginationContainer")
 
-      let itemsPerPageLimit = 5;
+      let itemsPerPageLimit = 2;
 
       loadRecipes("all")
 
 
-      async function loadRecipes(category){
+      async function loadRecipes(category,lastResult = ""){
             if (category != ""){
               
               let charArray = category.split('');
@@ -185,9 +185,18 @@
               finalCat = charArray.join('');
               
               categoryButton.innerText = "Category: "+finalCat;
+              recipe_showcase.dataset.category = category
+
+            }
+            if (lastResult != ""){
+              paginationId = "&paginationId="+lastResult
+              console.log(paginationId)
+            }
+            else {
+              paginationId = ""
             }
             try {
-                const response = await fetch('/get_recipes?q='+category,{
+                const response = await fetch('/get_recipes?category='+category+""+paginationId,{
                     method: 'POST'
                 });
                 const recipes = await response.json();
@@ -230,7 +239,7 @@
                   //now take lastId and pass it to loadRecipes function, to query the db startign at the last ID
                   //and repeat the process
                   if (recipes.length > numberToShow){
-                    paginationContainer.innerText = "More results to show via pagination"
+                    paginationContainer.innerHTML = "<a  class='btn btn-light' onclick='loadRecipes(\""+recipe_showcase.dataset.category+"\","+lastId+")'>Next page</a>"
                   }
                 }
             }

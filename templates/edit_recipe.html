@@ -29,6 +29,9 @@
                   <li class="nav-item" >
                     <a class="nav-link"  href="/ai_recipe_add">AI Add</a>
                   </li>
+                  <li class="nav-item" >
+                    <a class="nav-link" href="/shopping_list">Shopping List</a>
+                  </li>
                   <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                       Dev Tools
@@ -148,11 +151,21 @@
                                         <output for="difficulty_range" id="rangeValue"> {{recipe_details['difficulty']}}</output>
                                     </div>
                                     <div class="mb-3 mx-auto text-center" >
+                                        <label class="form-label" for="category_selector">Category</label>
+                                        <select class="form-control" id="category_selector" >
+                                            <option>Dinner</option>
+                                            <option>Dessert</option>
+                                            <option>Other</option>
+                                        </select>
+                                        
+                                    </div>
+                                    <div class="mb-3 mx-auto text-center" >
                                         <label class="form-label" for="tags">Tags</label>
                                         <input type="text" class="form-control w-100" name="tags" id="tags" aria-describedby="tags-help" value="{{recipe_details['tags']}}">
                                         <div id="tags-help" class="form-text"># seperated list of tags relating to this recipe.</div>
 
                                     </div>
+
                                     </form> <!-- FORM 2 CLOSED -->
                                 </div> <!-- ACCORDION-BODY 2 CLOSED -->
                                 </div> <!-- COLLAPSE 2 CLOSED -->
@@ -198,9 +211,11 @@
 
         const spinner_div = document.getElementById('spinner');
         const save_button = document.getElementById('save_button')
+        const catergorySelector = document.getElementById('category_selector')
         const tags = document.getElementById("tags")
         const recipe_id = "{{ recipe_details['id'] }}";
         
+        catergorySelector.value = "{{recipe_details['category']}}"
         save_button.disabled = true;
         spinner_div.hidden = true;
         checkRequired()
@@ -258,7 +273,8 @@
             if (recipe_photo.files.length > 0){
                 formData.append("recipe_photo", recipe_photo.files[0]);
             }
-            
+            categoryName = catergorySelector.value.toLowerCase()
+            formData.append("category",categoryName)
             formData.append("tags",tags.value);
 
             

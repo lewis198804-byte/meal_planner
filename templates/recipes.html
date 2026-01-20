@@ -6,6 +6,7 @@
     <title>Bootstrap demo</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
 </head>
   <body>
     <section>
@@ -55,10 +56,26 @@
           <div class=" text-end row row-col-12 mb-3" > 
                       <div class="col">
                         <a class=" btn btn-small btn-light" data-bs-toggle="modal" data-bs-target="#recipeSearchModal">Search</a> 
+                        <div class="dropdown d-inline">
+                          <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" id="categoryButton">
+                            Category: All
+                          </button>
+                          <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" onclick="categorySelect()">All</a></li>
+                            <li><a class="dropdown-item" onclick="categorySelect()">Dinner</a></li>
+                            <li><a class="dropdown-item" onclick="categorySelect()">Dessert</a></li>
+                            <li><a class="dropdown-item" onclick="categorySelect()">Other</a></li>
+                          </ul>
+                        </div>
                       </div>
                   </div>
           <div class="row row-cols-1 row-cols-sm-2 row-cols-md-5 justify-content-md-center gy-3" id="recipe_showcase">
           <!--Insert recipes on load via javascript-->
+          </div>
+          <div class="row">
+            <div class="col text-center pt-4" id="paginationContainer">
+              <!--pagination container-->
+            </div>
           </div>
         </div>
 
@@ -151,39 +168,71 @@
       const recipeInfoFooter = document.getElementById("recipeInfoFooter")
       const viewRecipeLink = document.getElementById("viewRecipeLink");
 
-      loadRecipes()
+      const categoryButton = document.getElementById("categoryButton")
+
+      const paginationContainer = document.getElementById("paginationContainer")
+
+      let itemsPerPageLimit = 5;
+
+      loadRecipes("all")
 
 
-      async function loadRecipes(){
+      async function loadRecipes(category){
+            if (category != ""){
+              
+              let charArray = category.split('');
+              charArray[0] = charArray[0].toUpperCase(); 
+              finalCat = charArray.join('');
+              
+              categoryButton.innerText = "Category: "+finalCat;
+            }
             try {
-                const response = await fetch('/get_recipes',{
+                const response = await fetch('/get_recipes?q='+category,{
                     method: 'POST'
                 });
                 const recipes = await response.json();
+                
                 contents = ""
                 if (recipes.length == 0){
-                    contents = "No Recipes in the database"
+                    recipe_showcase.innerHTML = "No Recipes in the database";
+                    paginationContainer.innerText = "";
+                    
                 }
-                
-                recipes.forEach(element => {
-                    contents += '\
-                    <div class="col">\
-                      <div class="card ">\
-                        <a href="/view_recipe?q='+element[0]+'">\
-                        <img src="/static/recipe_images/'+element[5]+'" class="card-img-top img-thumbnail" style="height: 200px; object-fit: cover;" alt="...">\
-                        </a>\
-                        <div class="card-body">\
-                          <h5>'+element[1]+'</small></h5>\
-                          <p class="small">'+element[2] + '. Pg:'+element[3]+'</p>\
-                          <p><a href="/view_recipe?q='+element[0]+'" class="btn btn-primary">View Recipe</a></p>\
-                          <p><a href="" class="btn btn-light btn-sm" style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;" data-bs-toggle="modal" data-bs-target="#deleteModal" onclick="openDeleteModal('+element[0]+')">Delete Recipe</a> <a class="btn btn-light btn-sm" style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;"  href="/edit_recipe?q='+element[0]+'" >Edit Recipe</a></p>\
+                else{
+                  if (recipes.length <= itemsPerPageLimit){
+                    numberToShow = recipes.length;
+                    paginationContainer.innerText = "";
+                  }
+                  else{
+                    numberToShow = itemsPerPageLimit
+                  }
+                  let lastId = 0;
+                  for (let i = 0;i < numberToShow; i++){
+                      contents += '\
+                      <div class="col">\
+                        <div class="card animate_animated animate__bounceIn">\
+                          <a href="/view_recipe?q='+recipes[i][0]+'">\
+                          <img src="/static/recipe_images/'+recipes[i][5]+'" class="card-img-top img-thumbnail" style="height: 200px; " alt="...">\
+                          </a>\
+                          <div class="card-body">\
+                            <h5>'+recipes[i][1]+'</small></h5>\
+                            <p class="small">'+recipes[i][2] + '. Pg:'+recipes[i][3]+'</p>\
+                            <p><a href="/view_recipe?q='+recipes[i][0]+'" class="btn btn-primary">View Recipe</a></p>\
+                            <p><a href="" class="btn btn-light btn-sm" style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;" data-bs-toggle="modal" data-bs-target="#deleteModal" onclick="openDeleteModal('+recipes[i][0]+')">Delete Recipe</a> <a class="btn btn-light btn-sm" style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;"  href="/edit_recipe?q='+recipes[i][0]+'" >Edit Recipe</a></p>\
+                          </div>\
                         </div>\
                       </div>\
-                    </div>\
-                    '
-                });
-                recipe_showcase.innerHTML = contents
-                console.log(recipes);
+                      '
+                      lastId = recipes[i][0];
+                  }
+                  recipe_showcase.innerHTML = contents
+
+                  //now take lastId and pass it to loadRecipes function, to query the db startign at the last ID
+                  //and repeat the process
+                  if (recipes.length > numberToShow){
+                    paginationContainer.innerText = "More results to show via pagination"
+                  }
+                }
             }
             catch(error){
                 console.log(error);
@@ -287,7 +336,10 @@
                 <button class="btn btn-primary" data-bs-target="#recipeSearchModal" data-bs-toggle="modal">Back</button>' 
       }
 
-
+      function categorySelect(){
+        const categorySelected = event.target.innerText.toLowerCase()
+        loadRecipes(categorySelected)
+      }
 
 
 

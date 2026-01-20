@@ -1,33 +1,27 @@
 <!doctype html>
 <html lang="en">
   <head>
-<style>
-.recipe-img {
-  width: 100% !important;      /* Override intrinsic width */
-  height: 150px !important;    /* Fixed height immediately */
-  object-fit: cover;           /* Crop to fit */
-  display: block;              /* No extra spacing */
-}
-.recipe-img {
-  filter: blur(8px);
-  transition: filter 0.3s ease;
-}
-.recipe-img[loaded] {
-  filter: blur(0);
-}
-</style>
-    
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+
     <title>PlatePlanner</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+
+    <!--Animation CSS effects-->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+    <!--Bootstrap styles-->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <!--Custom CSS changes-->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/custom_styling.css') }}" />
+    <!--JS that gets laoded once the site has been rendered.-->
+    <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
   </head>
+
   <body>
     <section>
         <header >
           <nav class="navbar navbar-expand-lg bg-body-tertiary mb-2">
             <div class="container-fluid">
-              <a class="navbar-brand" href="#"><strong>PlatePlanner</strong></a>
+              <a class="navbar-brand" href="/"><strong>PlatePlanner</strong></a>
               <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
               </button>
@@ -175,10 +169,8 @@
             </div>
           </div>
         </div>
-
     </section>
    
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
     <script>
 
       
@@ -270,9 +262,9 @@
               }
                 meal_plan_contents += '\
                 <div class="col ">\
-                  <div class="card '+highlight_today+' mt-4 position-relative">\
+                  <div class="card '+highlight_today+' mt-4 position-relative animate_animated animate__bounceIn">\
                       <a href="/view_recipe?q='+recipe['id']+'" >\
-                    <img onload="setLoaded()" src="/static/recipe_images/'+recipe['photo_path']+'" class="recipe-img card-img-top img-thumbnail" style="height: 150px; width:100%; object-fit: cover;" alt="...">\
+                    <img onload="setLoaded()" src="/static/recipe_images/'+recipe['photo_path']+'" class="recipe-img card-img-top img-thumbnail" style="height: 150px; object-fit: cover;" alt="...">\
                     </a>\
                     <div class="" style="position:absolute;top:20px;right:20px;">\
                         <a href="/view_recipe?q='+recipe['id']+'" onclick="setSearchModal(\''+day+'\',\'false\')" class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#changeRecipeModal">Change</a><br>\

@@ -1,0 +1,8 @@
+
+.recipe-img {
+  filter: blur(8px);
+  transition: filter 0.3s ease;
+}
+.recipe-img[loaded] {
+  filter: blur(0);
+}

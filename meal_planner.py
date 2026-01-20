@@ -109,15 +109,13 @@ def save_ai_recipe():
     tags = request.form['tags']
     difficulty = request.form['difficulty']
     description = request.form['description']
+    category = request.form['category']
     con = sqlite3.connect("database.db")
     cur = con.cursor()
 
     error_text = ""
     if name == "" or ingredients == "" or location == "":
         error_text = "Error: missing required field!" 
-
-
-
 
     photo = request.files.get('recipe_photo')
     if photo and photo.filename:  # Real file check
@@ -139,7 +137,7 @@ def save_ai_recipe():
     if saveType == "edit":
 
         recipe_id = request.form['recipe_id']
-        cur.execute("UPDATE recipes SET name = ?, location = ? ,page_nu = ?,instructions = ?,difficulty = ?,tags = ?,desc =? WHERE id = ?" ,(name, location, page,instructions,difficulty,tags,description,recipe_id))
+        cur.execute("UPDATE recipes SET name = ?, location = ? ,page_nu = ?,instructions = ?,difficulty = ?,category = ?, tags = ?, desc =? WHERE id = ?" ,(name, location, page,instructions,difficulty,category,tags,description,recipe_id))
         cur.execute("DELETE FROM ingredients WHERE recipe_id = ?" ,(recipe_id,))
         ingredients_strings = ingredients.split(",")
         ingredients_list = []
@@ -184,9 +182,19 @@ def save_ai_recipe():
 
 @app.route("/get_recipes", methods=['POST'])
 def get_recipes():
+    if request.args.get('q','') == "all":
+        category = ""
+    elif request.args.get('q','') == "dessert":
+        category = "WHERE category = 'dessert'"
+    elif request.args.get('q','') == "dinner":
+        category = "WHERE category = 'dinner'"
+    elif request.args.get('q','') == "other":
+        category = "WHERE category = 'other'"
+    else:
+        category = ""
     con = sqlite3.connect("database.db")
     cur = con.cursor()
-    cur.execute("SELECT * FROM recipes ORDER BY id")
+    cur.execute("SELECT * FROM recipes "+category+" ORDER BY id LIMIT 6")
     response = cur.fetchall()
     con.close()
     return response
@@ -251,7 +259,6 @@ def get_menu():
         con.close()
         return jsonify({"ok": False, "error": "no plan found"})
     
-    # Simple loop like your original, but builds ordered array
     menu = []
     for day in days:
         recipe_id = plan[day]
@@ -273,7 +280,7 @@ def gen_new_plan():
     cur = con.cursor()
     
     if request.form["planType"] == "auto":
-        cur.execute("SELECT * FROM recipes ORDER BY RANDOM() LIMIT 7")
+        cur.execute("SELECT * FROM recipes WHERE category = 'Dinner' ORDER BY RANDOM() LIMIT 7 ")
         rows = cur.fetchall()
         
         # Convert Row → dicts for JSON
@@ -400,7 +407,7 @@ def process_params():
                 
             #count number of already retrieved recipe ids and insert appropriate number of placeholders            
             placeholders = ', '.join('?' * len(retrievedRecipeIds))
-            query = f"SELECT * FROM recipes WHERE tags LIKE ? AND id NOT IN ({placeholders}) ORDER BY RANDOM() LIMIT 1"
+            query = f"SELECT * FROM recipes WHERE tags LIKE ? AND id NOT IN ({placeholders}) AND category = 'Dinner' ORDER BY RANDOM() LIMIT 1"
             # set params for db query
             params = (f'%{searchTerm}%',) + tuple(retrievedRecipeIds)
             cur.execute(query, params)

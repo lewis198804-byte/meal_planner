@@ -72,9 +72,14 @@
           <div class="row row-cols-1 row-cols-sm-2 row-cols-md-5 justify-content-md-center gy-3" id="recipe_showcase">
           <!--Insert recipes on load via javascript-->
           </div>
-          <div class="row">
-            <div class="col text-center pt-4" id="paginationContainer">
-              <!--pagination container-->
+          <div class="row row-col-2">
+            <div class="col text-center pt-4" >
+               <a class="btn btn-light d-none"  id="paginationBack">Back</a>
+              <!--insert pagination back button-->
+            </div>
+            <div class="col text-center pt-4" >
+              <a class="btn btn-light d-none"  id="paginationNext">Next</a>
+              <!--insert pagination next button-->
             </div>
           </div>
         </div>
@@ -170,14 +175,15 @@
 
       const categoryButton = document.getElementById("categoryButton")
 
-      const paginationContainer = document.getElementById("paginationContainer")
+      const paginationBack = document.getElementById("paginationBack");
+      const paginationNext = document.getElementById("paginationNext");
 
       let itemsPerPageLimit = 2;
 
       loadRecipes("all")
 
 
-      async function loadRecipes(category,lastResult = ""){
+      async function loadRecipes(category,lastResult = "",direction = "start"){
             if (category != ""){
               
               let charArray = category.split('');
@@ -195,27 +201,57 @@
             else {
               paginationId = ""
             }
+            if (direction != ""){
+              directionVar = "&direction="+direction;
+            }
+            else {
+              directionVar = "";
+            }
             try {
-                const response = await fetch('/get_recipes?category='+category+""+paginationId,{
+                const response = await fetch('/get_recipes?category='+category+""+paginationId+""+directionVar,{
                     method: 'POST'
                 });
                 const recipes = await response.json();
                 
+                const recipesRetrievedCount = recipes.length
+
                 contents = ""
                 if (recipes.length == 0){
-                    recipe_showcase.innerHTML = "No Recipes in the database";
-                    paginationContainer.innerText = "";
-                    
+                    recipe_showcase.innerHTML = "No Recipes found";
+                    paginationBack.classList.add("d-none");
+                    paginationNext.classList.add("d-none");
+                      
                 }
                 else{
                   if (recipes.length <= itemsPerPageLimit){
                     numberToShow = recipes.length;
-                    paginationContainer.innerText = "";
                   }
                   else{
                     numberToShow = itemsPerPageLimit
                   }
-                  let lastId = 0;
+                  
+                  if(recipes.length > numberToShow){
+                    paginationLinks = true
+                  }
+                  else{
+                    paginationLinks = false;
+                  }
+
+                  //remove the last item in the response (if over the number to be
+                  // displayed per page) as this was only retrieved to test for pagination
+                  //need
+                  if (recipes.length > numberToShow){
+                    recipes.pop();  
+                  }
+                  //if it is the previous button that has been pressed to trigger this function
+                  //reverse the order of resutls to display accurately 
+                  if (direction == "back"){
+                    recipes.reverse();
+                  }
+                  //set variables for the first rendered recipe and the last rendered recipe
+                  const firstId = recipes[0][0];
+                  const lastId = recipes[recipes.length - 1][0]; 
+
                   for (let i = 0;i < numberToShow; i++){
                       contents += '\
                       <div class="col">\
@@ -224,6 +260,7 @@
                           <img src="/static/recipe_images/'+recipes[i][5]+'" class="card-img-top img-thumbnail" style="height: 200px; " alt="...">\
                           </a>\
                           <div class="card-body">\
+                            '+recipes[i][0]+'\
                             <h5>'+recipes[i][1]+'</small></h5>\
                             <p class="small">'+recipes[i][2] + '. Pg:'+recipes[i][3]+'</p>\
                             <p><a href="/view_recipe?q='+recipes[i][0]+'" class="btn btn-primary">View Recipe</a></p>\
@@ -232,14 +269,57 @@
                         </div>\
                       </div>\
                       '
-                      lastId = recipes[i][0];
                   }
                   recipe_showcase.innerHTML = contents
 
-                  //now take lastId and pass it to loadRecipes function, to query the db startign at the last ID
-                  //and repeat the process
-                  if (recipes.length > numberToShow){
-                    paginationContainer.innerHTML = "<a  class='btn btn-light' onclick='loadRecipes(\""+recipe_showcase.dataset.category+"\","+lastId+")'>Next page</a>"
+                  //sort out pagination links, adjsuting visiblity and variables based on count of recipes
+                  //retrieved and whether the next or back buttons were pressed. 
+
+                  //if the next button is pressed or the page has just loaded fresh
+                  //if the number of retrieved recipes is higher than the amount wanted to be displayed
+                  //show next pagination button and adjust its onclick with variables to load next recipes in order
+                  if (direction == "next" || direction == "start"){
+                    if(recipesRetrievedCount > numberToShow){
+                      paginationNext.classList.remove("d-none")
+                      paginationNext.setAttribute("onclick","loadRecipes(\""+recipe_showcase.dataset.category+"\","+lastId+",\"next\")");
+                      if (direction != "start"){
+                        paginationBack.setAttribute("onclick","loadRecipes(\""+recipe_showcase.dataset.category+"\","+firstId+",\"back\")");
+                        paginationBack.classList.remove("d-none")
+                      }
+                      else if (direction == "start" && !paginationBack.classList.contains("d-none"))
+                        paginationBack.classList.add("d-none");
+                    
+                    }
+                    //if the number of recipes returned is less than or equal to the amount wanted to be shown
+                    else{
+                      if (direction == "start" ){
+                        paginationBack.classList.add("d-none");
+                        paginationNext.classList.add("d-none");
+                      }
+                      else{
+                        paginationNext.classList.add("d-none")
+                        paginationBack.setAttribute("onclick","loadRecipes(\""+recipe_showcase.dataset.category+"\","+firstId+",\"back\")");
+                        paginationBack.classList.remove("d-none")
+                      }
+                      
+                    }
+                  }
+
+                  if (direction == "back"){
+                    if(recipesRetrievedCount > numberToShow){
+                      paginationBack.classList.remove("d-none")
+                      paginationBack.setAttribute("onclick","loadRecipes(\""+recipe_showcase.dataset.category+"\","+firstId+",\"back\")");
+                  
+                      paginationNext.classList.remove("d-none")
+                      paginationNext.setAttribute("onclick","loadRecipes(\""+recipe_showcase.dataset.category+"\","+lastId+",\"next\")");
+  
+                    }
+                    else{
+                      paginationBack.classList.add("d-none")
+                      paginationNext.setAttribute("onclick","loadRecipes(\""+recipe_showcase.dataset.category+"\","+lastId+",\"next\")");
+                      paginationNext.classList.remove("d-none")
+                    }
+
                   }
                 }
             }

@@ -186,7 +186,7 @@ def get_recipes():
     print(recipeParams)
 
     
-
+    orderDir = "DESC"
 
     if recipeParams['category'] == "all":
         category = " "
@@ -205,19 +205,25 @@ def get_recipes():
             connector = "WHERE "
         elif category != " ":
             connector = "AND "
-
-        paginationQuery = connector+"id < "+recipeParams['paginationId']+" "
+        if "direction" in recipeParams:
+            if recipeParams['direction'] == "next":
+                paginationQuery = connector+"id < "+recipeParams['paginationId']+" "
+            elif recipeParams['direction'] == "back":
+                paginationQuery = connector+"id > "+recipeParams['paginationId']+" "
+                orderDir = "ASC"
         print(paginationQuery)
     else:
         paginationQuery = ""
 
     con = sqlite3.connect("database.db")
     cur = con.cursor()
-    selectQuery = "SELECT * FROM recipes"+category+""+paginationQuery+"ORDER BY id DESC LIMIT 3"
+    selectQuery = "SELECT * FROM recipes"+category+""+paginationQuery+"ORDER BY id "+orderDir+" LIMIT 3"
     print(selectQuery)
+
     cur.execute(selectQuery)
     response = cur.fetchall()
     con.close()
+
     return response
 
 @app.route("/shopping_list")

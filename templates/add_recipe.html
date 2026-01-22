@@ -132,6 +132,14 @@
                                         <output for="difficulty_range" id="rangeValue"></output>
                                     </div>
                                     <div class="mb-3 mx-auto text-center" >
+                                        <label class="form-label" for="category_selector">Category</label>
+                                        <select class="form-control" id="category_selector" >
+                                            <option>Dinner</option>
+                                            <option>Dessert</option>
+                                            <option>Other</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3 mx-auto text-center" >
                                         <label class="form-label" for="tags">Tags</label>
                                         <input type="text" class="form-control w-100" name="tags" id="tags" aria-describedby="tags-help">
                                         <div id="tags-help" class="form-text"># seperated list of tags relating to this recipe.</div>
@@ -185,6 +193,7 @@
 
         const spinner_div = document.getElementById('spinner');
         const save_button = document.getElementById('save_button')
+        const catergorySelector = document.getElementById('category_selector')
         const tags = document.getElementById("tags")
 
         
@@ -227,6 +236,7 @@
 
         async function save_recipe(){
             toggleErrorAlert("off")
+            save_button.disabled = true
             const formData = new FormData();
             formData.append("saveType", "new");
             formData.append("recipe_name", name_field.value);
@@ -237,9 +247,12 @@
             formData.append("ingredients", ingredients.value);
             formData.append("difficulty", difficulty_text);
             formData.append("recipe_photo", recipe_photo.files[0]);
+            categoryName = catergorySelector.value.toLowerCase()
+            formData.append("category",categoryName)
             formData.append("tags",tags.value);
             
             console.log(formData)
+            spinner_div.hidden = false;
             const response = await fetch("/save_ai_recipe", {
                 method: 'POST',
                 body: formData
@@ -247,10 +260,10 @@
 
             const insert_response = await response.json();
             if (insert_response.ok){
-               
-                alert_field.innerHTML = insert_response.success
-                toggleSuccessAlert("on")
-                console.log("recipe saved successfully")
+               spinner_div.hidden = true;
+                window.location.href = "/view_recipe?q="+insert_response.recipe_Id;
+                //toggleSuccessAlert("on")
+                //console.log("recipe saved successfully")
             }
             else {
                 alert_field.innerHTML = insert_response.error

@@ -162,6 +162,14 @@
                                         <output for="difficulty_range" id="rangeValue"></output>
                                     </div>
                                     <div class="mb-3 mx-auto text-center" >
+                                        <label class="form-label" for="category_selector">Category</label>
+                                        <select class="form-control" id="category_selector" >
+                                            <option>Dinner</option>
+                                            <option>Dessert</option>
+                                            <option>Other</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3 mx-auto text-center" >
                                         <label class="form-label" for="tags">Tags</label>
                                         <input type="text" class="form-control w-100" name="tags" id="tags">
                                     </div>
@@ -206,6 +214,7 @@
         const recipe_photo = document.getElementById("recipe_photo");
         const rangeInput = document.getElementById('difficulty_range');
         const rangeOutput = document.getElementById('rangeValue');
+        const catergorySelector = document.getElementById('category_selector')
         const tags = document.getElementById("tags")
 
         const spinner_div = document.getElementById('spinner');
@@ -305,6 +314,8 @@
             formData.append("ingredients", ingredients.value);
             formData.append("difficulty", difficulty_text);
             formData.append("recipe_photo", recipe_photo.files[0]);
+            categoryName = catergorySelector.value.toLowerCase()
+            formData.append("category",categoryName)
             formData.append("tags", tags.value);
             
             console.log(formData)

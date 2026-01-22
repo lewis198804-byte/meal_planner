@@ -110,6 +110,7 @@ def save_ai_recipe():
     difficulty = request.form['difficulty']
     description = request.form['description']
     category = request.form['category']
+  
     con = sqlite3.connect("database.db")
     cur = con.cursor()
 
@@ -128,7 +129,7 @@ def save_ai_recipe():
         save_recipe_image(photo,f"static/recipe_images/{filename}")
 
     else:
-        image_filename = None  # Or default image
+        image_filename = "defaultImage.jpg"  # Or default image
     
     if error_text != "":
          return jsonify({"ok": False, "error": error_text})
@@ -160,7 +161,7 @@ def save_ai_recipe():
         return jsonify({"ok": True, "success": "Recipe updated succesfully!"})
 #or a new recipe being saved
     else:
-        cur.execute("INSERT INTO recipes (name,location,page_nu,instructions,difficulty,tags,photo_path,desc) VALUES (?,?,?,?,?,?,?,?)" ,(name, location, page,instructions,difficulty,tags,image_filename,description))
+        cur.execute("INSERT INTO recipes (name,location,page_nu,instructions,difficulty,category,tags,photo_path,desc) VALUES (?,?,?,?,?,?,?,?,?)" ,(name, location, page,instructions,difficulty,category,tags,image_filename,description))
     
         recipe_id = cur.lastrowid
         ingredients_strings = ingredients.split(",")
@@ -171,14 +172,13 @@ def save_ai_recipe():
             if len(item.strip()) > 0:
                 this_ingredient = (item.strip(), recipe_id)
                 ingredients_list.append(this_ingredient)
-        
-        print(ingredients_list)
-        
+                
         cur.executemany("INSERT INTO ingredients (name,recipe_id) VALUES (?,?)" , ingredients_list)
 
         con.commit()
+        recipeID = cur.lastrowid
         con.close()
-        return jsonify({"ok": True, "success": "Recipe added succesfully!"})
+        return jsonify({"ok": True, "success": "Recipe added succesfully!","recipe_Id": recipeID})
 
 @app.route("/get_recipes", methods=['POST'])
 def get_recipes():
@@ -217,7 +217,7 @@ def get_recipes():
 
     con = sqlite3.connect("database.db")
     cur = con.cursor()
-    selectQuery = "SELECT * FROM recipes"+category+""+paginationQuery+"ORDER BY id "+orderDir+" LIMIT 3"
+    selectQuery = "SELECT * FROM recipes"+category+""+paginationQuery+"ORDER BY id "+orderDir+" LIMIT 5"
     print(selectQuery)
 
     cur.execute(selectQuery)
@@ -307,7 +307,7 @@ def gen_new_plan():
     cur = con.cursor()
     
     if request.form["planType"] == "auto":
-        cur.execute("SELECT * FROM recipes WHERE category = 'Dinner' ORDER BY RANDOM() LIMIT 7 ")
+        cur.execute("SELECT * FROM recipes WHERE category = 'dinner' ORDER BY RANDOM() LIMIT 7 ")
         rows = cur.fetchall()
         
         # Convert Row → dicts for JSON
@@ -434,7 +434,7 @@ def process_params():
                 
             #count number of already retrieved recipe ids and insert appropriate number of placeholders            
             placeholders = ', '.join('?' * len(retrievedRecipeIds))
-            query = f"SELECT * FROM recipes WHERE tags LIKE ? AND id NOT IN ({placeholders}) AND category = 'Dinner' ORDER BY RANDOM() LIMIT 1"
+            query = f"SELECT * FROM recipes WHERE tags LIKE ? AND id NOT IN ({placeholders}) AND category = 'dinner' ORDER BY RANDOM() LIMIT 1"
             # set params for db query
             params = (f'%{searchTerm}%',) + tuple(retrievedRecipeIds)
             cur.execute(query, params)

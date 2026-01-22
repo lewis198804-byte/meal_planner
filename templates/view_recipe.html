@@ -128,7 +128,7 @@
                                 </div>
                             </div>
                                 <p class="text-end mt-3"> <a class="btn btn-primary"  href="/edit_recipe?q={{recipe_details['id']}}" >Edit Recipe</a></p>
-
+                                <p class="text-end mt-3"> <a class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#deleteConfirmModal" >Delete Recipe</a></p>
                         </div>
                 
                     </div>
@@ -137,12 +137,40 @@
             </div>
          
         </div>
-          
+
+        <!--modal Window-->
+        <!--Recipe change Modal-->
+        <div class="modal fade " id="deleteConfirmModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h1 class="modal-title fs-5" id="staticBackdropLabel">Delete Recipe</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              
+              <div class="modal-footer">
+                <button type="button" onclick="deleteRecipe({{recipe_details['id']}})" class="btn btn-secondary" data-bs-dismiss="modal">Yes?</button>
+              </div>
+            </div>
+          </div>
+        </div>          
     </section>
    
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
     <script>
-        
+        async function deleteRecipe(recipe_id){
+            try {
+                const response = await fetch('/del_recipe?q='+recipe_id);
+                const del_response = await response
+
+                if (del_response.ok){
+                    window.location.href = "/recipes";
+                }
+            }
+            catch(error){
+                console.log(error)
+            }
+        }
     </script>
     </body>
 </html>

@@ -7,6 +7,15 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <style>
+      .card-img-top {
+          width: 100%;
+          height: 200px;                    /* Reserves space */
+          aspect-ratio: 16/9;              /* Modern fallback */
+          object-fit: cover;
+          background: #f8f9fa;             /* Loading placeholder */
+      }
+    </style>
 </head>
   <body>
     <section>
@@ -56,7 +65,7 @@
           <div class=" text-end row row-col-12 mb-3" > 
                       <div class="col">
                         <a class=" btn btn-small btn-light" data-bs-toggle="modal" data-bs-target="#recipeSearchModal">Search</a> 
-                        <div class="dropdown d-inline">
+                        <div class="dropdown-center d-inline">
                           <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" id="categoryButton">
                             Category: All
                           </button>
@@ -67,12 +76,13 @@
                             <li><a class="dropdown-item" onclick="categorySelect()">Other</a></li>
                           </ul>
                         </div>
+                        
                       </div>
                   </div>
           <div class="row row-cols-1 row-cols-sm-2 row-cols-md-5 justify-content-md-center gy-3" id="recipe_showcase">
           <!--Insert recipes on load via javascript-->
           </div>
-          <div class="row row-col-2">
+          <div class="row row-col-2 pb-4">
             <div class="col text-center pt-4" >
                <a class="btn btn-light d-none"  id="paginationBack">Back</a>
               <!--insert pagination back button-->
@@ -178,7 +188,7 @@
       const paginationBack = document.getElementById("paginationBack");
       const paginationNext = document.getElementById("paginationNext");
 
-      let itemsPerPageLimit = 2;
+      let itemsPerPageLimit = 4;
 
       loadRecipes("all")
 
@@ -257,10 +267,9 @@
                       <div class="col">\
                         <div class="card animate_animated animate__bounceIn">\
                           <a href="/view_recipe?q='+recipes[i][0]+'">\
-                          <img src="/static/recipe_images/'+recipes[i][5]+'" class="card-img-top img-thumbnail" style="height: 200px; " alt="...">\
+                          <img src="/static/recipe_images/'+recipes[i][5]+'" loading="lazy" class="card-img-top img-thumbnail" style="height: 200px; " alt="...">\
                           </a>\
                           <div class="card-body">\
-                            '+recipes[i][0]+'\
                             <h5>'+recipes[i][1]+'</small></h5>\
                             <p class="small">'+recipes[i][2] + '. Pg:'+recipes[i][3]+'</p>\
                             <p><a href="/view_recipe?q='+recipes[i][0]+'" class="btn btn-primary">View Recipe</a></p>\
@@ -340,7 +349,7 @@
 
                 if (del_response.ok){
                     //console.log(response)
-                    loadRecipes()
+                    loadRecipes("all")
                 }
             }
             catch(error){

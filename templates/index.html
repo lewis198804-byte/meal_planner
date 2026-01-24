@@ -221,19 +221,16 @@
           const menu = fullResponse.menu;  // Extract the array
           meal_plan_contents = ""
           console.log(menu)
-          console.log(menu.length)
-          if (menu.length == 0){
-            meal_plan_contents =  ' <div class="col-lg-3 col-md-6 col-12" for each day>\
+          if (!menu){
+            meal_plan_contents =  ' <div class="col">\
                               <div class="card h-100">  <!-- h-100 fills height -->\
                                 <div class="card-header bg-primary text-white text-center">\
-                                  <h5>Monday</h5>  <!-- Short day name -->\
+                                  <h5>Missing Meal Plan</h5> \
                                 </div>\
                                 <div class="card-body d-flex flex-column">\
-                                  <h6 class="card-title">Recipe Name</h6>\
-                                  <p class="card-text text-muted small mb-2">Difficulty: Medium</p>\
-                                  <p class="card-text flex-grow-1">Short instructions preview...</p>\
+                                  <p>You haven\'t set a meal plan yet!</p>\
                                   <div class="card-footer bg-light">\
-                                    <small>Source: Pinch of Nom</small>\
+                                    <button class="btn btn-primary" data-bs-toggle="offcanvas" data-bs-target="#newMenuOffcanvas" aria-controls="newMenuOffcanvas">Choose a plan</button>\
                                   </div>\
                                 </div>\
                               </div>\
@@ -260,6 +257,10 @@
                 highlight_today = ""
                 today_badge = ""
               }
+              console.log(dayObj[day]['id'])
+              // if the recipe id does not == 0 show the relevant recipe card
+              // 0 meaning a recipe was not assigned when the meal plan was made. 
+              if (dayObj[day]['id'] != 0){
                 meal_plan_contents += '\
                 <div class="col ">\
                   <div class="card '+highlight_today+' mt-4 position-relative animate_animated animate__bounceIn">\
@@ -280,8 +281,31 @@
                   </div>\
                 </div>\
                 '
+              }
+              //if the recipe id is zero, means no recipe set when meal plan was made, so show no recipe card
+              //with option to swap in a new recipe.
+              else{
+                console.log("this recipe id:", dayObj[day]['id'] )
+                meal_plan_contents += '\
+                <div class="col ">\
+                  <div class="card '+highlight_today+' mt-4 position-relative animate_animated animate__bounceIn">\
+                      \
+                    <img onload="setLoaded()" src="/static/recipe_images/emptyPlate.jpg" class="recipe-img card-img-top img-thumbnail" style="height: 150px; object-fit: cover;" alt="...">\
+                    \
+                    <div class="card-body">\
+                    '+today_badge+'\
+                      <h3 class="text-center">No Recipe set!</h3>\
+                      <div class="flex text-center">\
+                      <a onclick="setSearchModal(\''+day+'\',\'false\')" class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#changeRecipeModal">Set recipe</a>\
+                      </div>\
+                    </div>\
+                  </div>\
+                </div>\
+                '
+              }
             });
           }
+          
           meal_plan_showcase.innerHTML = meal_plan_contents
         }
         catch (error){

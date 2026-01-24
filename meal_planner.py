@@ -137,6 +137,7 @@ def save_ai_recipe():
 #determine if this is an edit that is being saved 
     if saveType == "edit":
 
+        
         recipe_id = request.form['recipe_id']
         cur.execute("UPDATE recipes SET name = ?, location = ? ,page_nu = ?,instructions = ?,difficulty = ?,category = ?, tags = ?, desc =? WHERE id = ?" ,(name, location, page,instructions,difficulty,category,tags,description,recipe_id))
         cur.execute("DELETE FROM ingredients WHERE recipe_id = ?" ,(recipe_id,))
@@ -153,12 +154,12 @@ def save_ai_recipe():
         
         cur.executemany("INSERT INTO ingredients (name,recipe_id) VALUES (?,?)" , ingredients_list)
         
-        if image_filename != None:
+        if image_filename != None and image_filename != "defaultImage.jpg":
             cur.execute("UPDATE recipes SET photo_path = ? WHERE id = ?" ,(image_filename,recipe_id))
 
         con.commit()
         con.close()
-        return jsonify({"ok": True, "success": "Recipe updated succesfully!"})
+        return jsonify({"ok": True, "success": "Recipe updated succesfully!","recipe_Id": recipe_id})
 #or a new recipe being saved
     else:
         cur.execute("INSERT INTO recipes (name,location,page_nu,instructions,difficulty,category,tags,photo_path,desc) VALUES (?,?,?,?,?,?,?,?,?)" ,(name, location, page,instructions,difficulty,category,tags,image_filename,description))
@@ -285,15 +286,21 @@ def get_menu():
     if not plan:
         con.close()
         return jsonify({"ok": False, "error": "no plan found"})
+        print("no plan")
     
     menu = []
     for day in days:
         recipe_id = plan[day]
-        if recipe_id:
+        if recipe_id is not None:
             cur.execute("SELECT * FROM recipes WHERE id = ?", (recipe_id,))
             recipe = cur.fetchone()
             if recipe:
                 menu.append({day: dict(recipe)})
+                print("found recipe")
+            else:
+                menu.append({day: dict(id = 0, name = "no Recipe")})
+                print("no recipe found")
+
     
     con.close()
    
@@ -309,7 +316,12 @@ def gen_new_plan():
     if request.form["planType"] == "auto":
         cur.execute("SELECT * FROM recipes WHERE category = 'dinner' ORDER BY RANDOM() LIMIT 7 ")
         rows = cur.fetchall()
-        
+        if len(rows) < 7:
+            print("not enough recipes to make a full meal plan")
+            [print(row[1]) for row in rows]
+            while len(rows) < 7:
+                rows.append({"id": 0, "name" : "No recipe Assigned"})
+            #[print(row[0]) for row in rows]
         # Convert Row → dicts for JSON
         recipes = [dict(row) for row in rows]
         
@@ -334,6 +346,7 @@ def save_new_plan():
     con = sqlite3.connect("database.db")
     cur = con.cursor()
     cur.execute("UPDATE meal_plans SET current_plan = 0 WHERE current_plan = 1")
+    print("columns:",columns,"recipes to enter",recipes_to_enter)
     cur.execute("INSERT INTO meal_plans ("+columns+", current_plan) VALUES ("+recipes_to_enter+", 1)")
     con.commit()
     con.close()
@@ -479,13 +492,16 @@ def generate_shopping_list():
     for row in result:
         cur.execute("SELECT name FROM recipes WHERE id = ?", (row,))
         nameResult = cur.fetchone()
-        recipeName = nameResult['name'].strip()
-        thisRecipeIng = []
-        cur.execute("SELECT name FROM ingredients WHERE recipe_id = ?", (row,))
-        ingResult = cur.fetchall()
-        for ingredient in ingResult:
-            thisRecipeIng.append(ingredient['name'])
-            ingredients[recipeName] = (thisRecipeIng)
+        if nameResult is not None:
+            recipeName = nameResult['name'].strip()
+            thisRecipeIng = []
+            cur.execute("SELECT name FROM ingredients WHERE recipe_id = ?", (row,))
+            ingResult = cur.fetchall()
+            for ingredient in ingResult:
+                thisRecipeIng.append(ingredient['name'])
+                ingredients[recipeName] = (thisRecipeIng)
+        else:
+            ingredients['No Meal Planned'] = (["no ingredients"])
 
     #print(ingredients)
     return {"result" : ingredients}

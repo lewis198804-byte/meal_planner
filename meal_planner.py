@@ -479,6 +479,8 @@ def process_params():
         con.close()
         return {"results": grabbedRecipes}
 
+
+#page to show the combined ingredients needed for each recipe in the current meal plan
 @app.route("/generate_shopping_list")
 def generate_shopping_list():
 
@@ -505,55 +507,14 @@ def generate_shopping_list():
 
     #print(ingredients)
     return {"result" : ingredients}
-    ingredients_str = json.dumps(ingredients, indent=2)
-    headers = {
-        'Authorization': f'Bearer {OPENAI_API_KEY}',
-        'Content-Type': 'application/json'
-    }
-
-    payload = {
-    'model': 'gpt-4o-mini',
-    'messages': [
-        {
-            'response_format': {'type': 'html elements'},
-            'role': 'system',
-            'content': '''You are a shopping list generator. 
-            Analyze all ingredients mentioned and create a clean, organized shopping list.
-            Group similar items (e.g. "2 onions, 1 garlic bulb" → "Onions, garlic").
-            Seperate ingredients with headings for the type of ingredient e.g. Meats, Condiments, Vegetables, Dairy etc
-            Use bullet points or numbered list. Only list ingredients—nothing else.'''
-        },
-        {
-            'role': 'user', 
-            'content': f''' Your response must be pure HTML. the return
-             content should be enclosed in <li></li> tags. HEadings list tags should have a class of heading.
-             No introductory text.
-            The provided ingredients object consists of a list of key value pairs
-            with the recipe name being the key and the value being a list of ingredients for that recipe. 
-            Create a shopping list from these ingredients:
-            {ingredients_str}
-            Output ONLY valid HTML. Output will be read by python program'''
-        }
-    ],
-    'temperature': 0.1,  # Low for consistent lists
-    'max_tokens': 1200
-    }
-
-    response = requests.post('https://api.openai.com/v1/chat/completions', 
-                           headers=headers, json=payload)
     
-    if response.status_code != 200:
-        return jsonify({'error': response.json()}), 500
-    
-    result = response.json()['choices'][0]['message']['content']
-    print(result)
-    return {"result" : result}
 
 
 @app.route('/analyze-recipe', methods=['POST'])
 def analyze_recipe():
-    if 'image' not in request.files:
-        return jsonify({'error': 'Missing image file'}), 400
+    print(request.files['image'].filename)
+    if request.files['image'].filename == "":
+        return jsonify({'errorText': '<p>Missing image file.</p> <p>Choose an image before submitting.</p>', 'ok': 'false'}), 400
     
     # Read + encode uploaded image
     img_data = request.files['image'].read()
@@ -605,8 +566,15 @@ def analyze_recipe():
     if response.status_code != 200:
         return jsonify({'error': response.json()}), 500
     
+    
+    
     result = response.json()['choices'][0]['message']['content']
-    return jsonify({'recipe': result})
+
+    if 'error' in result:
+
+        return jsonify({'errorText': '<p>There was an issue analyzing the image you submitted.</p><p>Check the image and try again</p><p><small>Only pictures of recipes will be processed!</small></p>','ok': 'false','recipe': result})
+    
+    return jsonify({'recipe': result, 'ok' : 'true','successText':'<p>Recipe image analyzed.</p><p>Take a look at the identified details and double check for accuracy!</p>'})
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0',port=5002)

@@ -53,7 +53,7 @@
         <div class="container">
             <div class="row">
                 <div class="col col-12">
-                    <div class="card text-center mt-3">
+                    <div class="card text-center mt-3 pt-4">
                         <form method="POST" enctype="multipart/form-data" id="ai_form">
                         <div class="mb-3 mx-auto" style="width:20em">
                                 <label for="photo" class="form-label">Select a photo to analyze with AI.</label>
@@ -62,14 +62,23 @@
                             <div class="spinner-border text-info" id="spinner" role="status">
                                 <span class="visually-hidden">Loading...</span>
                             </div>
+                            <div class="alert alert-danger w-50 mx-auto" id="submitError"></div>
+                            <div class="alert alert-success w-50 mx-auto" id="submitSuccess"></div>
                         </form>
                         <p><button onclick="submitToAi()" id="ai_submit_button" class="btn btn-primary">Submit</button></p>
                     </div>
                 </div>
             </div>
             <div class="row">
+                
+            </div>
+            <div class="row">
+               
                 <div class="col col-12 col-md-6">
-                    <div class="card text-center mt-5 mx-auto" >
+                     <div class=" mt-3 alert alert-primary text-center small">
+                        <p>This information will populate once you submit an image of a recipe!</p>
+                    </div>
+                    <div class="card text-center mt-1 mx-auto" >
                         <h1 id="recipe_name_h1" class="mb-3 mt-3"></h1>
                         <div class="mb-3">
                             <h3>Ingredients</h3>
@@ -86,7 +95,10 @@
                     </div>
                 </div>
                 <div class="col col-12 col-md-6">
-                    <div class="card mt-5">
+                    <div class=" mt-3 alert alert-primary text-center small">
+                        <p>Double check the info that AI grabbed and add extra details to make this recipe easy to find!</p>
+                    </div>
+                    <div class="card mt-1">
                         <div class="accordion" id="accordionExample">
                             <!-- FIRST ITEM -->
                             <div class="accordion-item">
@@ -178,20 +190,17 @@
                                 </div> <!-- ACCORDION-BODY 2 CLOSED -->
                                 </div> <!-- COLLAPSE 2 CLOSED -->
                             </div> <!-- ITEM 2 CLOSED -->
+                            <div class=" text-center mt-3">
+                                <div class="alert invisible" role="alert" id="alert_field"></div>
+                                <p><button id="save_button" class="btn btn-primary pt-1" onclick='save_recipe()'>Save Recipe</button></p>
+                            </div>
                             </div> <!-- ACCORDION CLOSED -->
 
                         
                     </div>
                 </div>
             </div>
-            <div class="row">
-                <div class="col col-12">
-                    <div class=" text-center mt-3">
-                        <div class="alert invisible" role="alert" id="alert_field"></div>
-                        <p><button id="save_button" class="btn btn-primary mt-5" onclick='save_recipe()'>Save Recipe</button></p>
-                    </div>
-                </div>
-            </div>
+            
         </div>
         
     </section>
@@ -201,6 +210,7 @@
 
         const alert_field = document.getElementById("alert_field");
         const ai_form = document.getElementById("ai_form");
+        const ai_photo = document.getElementById("ai_photo");
         const page_number = document.getElementById("page_number");
         const instructions = document.getElementById("instructions");
         const ingredients = document.getElementById("ingredients")
@@ -219,9 +229,16 @@
 
         const spinner_div = document.getElementById('spinner');
         const save_button = document.getElementById('save_button')
+        const errorBox = document.getElementById("submitError")
+        const successBox = document.getElementById("submitSuccess");
+        const ai_submit_button = document.getElementById("ai_submit_button")
+
+        ai_photo.addEventListener("change", function(){ai_submit_button.disabled=false;})
         
         save_button.disabled = true;
         spinner_div.hidden = true;
+        errorBox.hidden = true;
+        successBox.hidden = true;
 
         rangeOutput.textContent = "Easy";
         let difficulty_text = "Easy"
@@ -258,6 +275,8 @@
         async function submitToAi(){
             const formData = new FormData(ai_form)
             spinner_div.hidden = false;
+            errorBox.hidden = true;
+            successBox.hidden = true;
             ai_submit_button.disabled = true;
             let ingredients_list_items = ""
             let instructions_list_items = ""
@@ -266,39 +285,56 @@
             body: formData,
             });
             const data = await response.json();
-            //console.log('Raw API response:', data);
-            const recipe = JSON.parse(data.recipe)
-            //console.log(recipe)
-
-            name_field.value = recipe.recipe_name
-            if (recipe.recipe_name != ""){
-                name_field.classList.add("bg-success-subtle")
+            console.log(data)
+            if (data.ok == 'false'){
+                //issue with image submitted (likely no image submitted) show error
+                spinner_div.hidden = true
+                errorBox.hidden = false;
+                errorBox.innerHTML = (data.errorText);
+                
             }
-            ingredients.value = recipe.ingredients
-            if (ingredients.value != ""){
-                ingredients.classList.add("bg-success-subtle")
+            else {
+                console.log(data.recipe['error'])
+                spinner_div.hidden = true;
+
+                if (errorBox.hidden == false){
+                    errorBox.hidden = true;
+                }
+                successBox.hidden = false;
+                successBox.innerHTML = (data.successText);
+                //console.log('Raw API response:', data);
+                const recipe = JSON.parse(data.recipe)
+                console.log(recipe)
+
+                name_field.value = recipe.recipe_name
+                if (recipe.recipe_name != ""){
+                    name_field.classList.add("bg-success-subtle")
+                }
+                ingredients.value = recipe.ingredients
+                if (ingredients.value != ""){
+                    ingredients.classList.add("bg-success-subtle")
+                }
+                instructions.value = recipe.instructions
+
+                recipe.ingredients.forEach(element => {
+                    ingredients_list_items += "<li class='list-group-item'>"+element+"</li>"
+                });
+
+                page_number.value = recipe.page_number;
+                tags.value = recipe.tags;
+                description.value = recipe.description;
+                ingredients_list.innerHTML = ingredients_list_items
+
+                recipe.instructions.forEach(element => {
+                    instructions_list_items += "<li class='list-group-item'>"+element+"</li>"
+                });
+
+                instructions_list.innerHTML = instructions_list_items
+
+                recipe_name_header.innerHTML = recipe.recipe_name
+                ai_submit_button.disabled = false;
+                checkRequired()
             }
-            instructions.value = recipe.instructions
-
-            recipe.ingredients.forEach(element => {
-                ingredients_list_items += "<li class='list-group-item'>"+element+"</li>"
-            });
-
-            page_number.value = recipe.page_number;
-            tags.value = recipe.tags;
-            description.value = recipe.description;
-            ingredients_list.innerHTML = ingredients_list_items
-
-            recipe.instructions.forEach(element => {
-                instructions_list_items += "<li class='list-group-item'>"+element+"</li>"
-            });
-
-            instructions_list.innerHTML = instructions_list_items
-
-            recipe_name_header.innerHTML = recipe.recipe_name
-            spinner_div.hidden = true;
-            ai_submit_button.disabled = false;
-            checkRequired()
         }
 
         async function save_recipe(){

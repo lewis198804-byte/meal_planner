@@ -215,7 +215,7 @@
         const tags = document.getElementById("tags")
         const recipe_id = "{{ recipe_details['id'] }}";
         
-        catergorySelector.value = "{{recipe_details['category']}}"
+        catergorySelector.value = capitalizeFirstLetter("{{recipe_details['category']}}")
         save_button.disabled = true;
         spinner_div.hidden = true;
         checkRequired()
@@ -324,6 +324,10 @@
                 alert_field.classList.remove("visible")
                 alert_field.classList.add("invisible")
             }
+        }
+
+        function capitalizeFirstLetter(string) {
+            return string.charAt(0).toUpperCase() + string.slice(1);
         }
     </script>
 

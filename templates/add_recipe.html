@@ -55,7 +55,7 @@
             <div class="row justify-content-md-center ">
 
                 <div class="col col-12 col-md-6 ">
-                    <div class="card mt-2">
+                    <div class="card mt-2 mb-5">
                         <div class="accordion" id="accordionExample">
                             <!-- FIRST ITEM -->
                             <div class="accordion-item">
@@ -149,6 +149,13 @@
                                 </div> <!-- ACCORDION-BODY 2 CLOSED -->
                                 </div> <!-- COLLAPSE 2 CLOSED -->
                             </div> <!-- ITEM 2 CLOSED -->
+                            <div class=" text-center mt-3">
+                                <div class="spinner-border text-info" id="spinner" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <div class="alert invisible" role="alert" id="alert_field"></div>
+                                <p><button id="save_button" class="btn btn-primary mt-1" onclick='save_recipe()'>Save Recipe</button></p>
+                            </div>
                             </div> <!-- ACCORDION CLOSED -->
 
                         
@@ -157,13 +164,7 @@
             </div>
             <div class="row">
                 <div class="col col-12">
-                    <div class=" text-center mt-3">
-                        <div class="spinner-border text-info" id="spinner" role="status">
-                                <span class="visually-hidden">Loading...</span>
-                        </div>
-                        <div class="alert invisible" role="alert" id="alert_field"></div>
-                        <p><button id="save_button" class="btn btn-primary mt-5" onclick='save_recipe()'>Save Recipe</button></p>
-                    </div>
+                    
                 </div>
             </div>
         </div>

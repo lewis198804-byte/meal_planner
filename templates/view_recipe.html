@@ -113,7 +113,7 @@
                                 <div class="accordion-body">
 
                                     {% if recipe_details['instructions'] != "" %}
-                                        {% set instruction_list = recipe_details['instructions'].split(".") %}
+                                        {% set instruction_list = recipe_details['instructions'].split(",") %}
                                         <ul class="list-group list-group-numbered">
                                             {% for instruction in instruction_list %}
                                                 {% if instruction != "" %}

@@ -85,6 +85,22 @@ def build_database():
     con.close()
     return "database built"
 
+@app.route("/get_settings")
+def get_settings():
+
+    return {"ok":"true","apiKey": OPENAI_API_KEY}
+
+@app.route("/update_settings", methods=['POST'])
+def update_key():
+    newKey = request.form['apiKey']
+    if newKey == OPENAI_API_KEY :
+        return {"ok": "same"}
+    elif newKey == "":
+        return {"ok": "false"}
+    else:
+        
+        return {"ok": "true"}
+
 @app.route("/add_recipe")
 def add_recipe():
     return render_template("add_recipe.html")

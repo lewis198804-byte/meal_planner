@@ -265,9 +265,9 @@
                   for (let i = 0;i < numberToShow; i++){
                       contents += '\
                       <div class="col">\
-                        <div class="card animate_animated animate__bounceIn">\
+                        <div class="card animate_animated animate__bounceIn" style="height:100%;">\
                           <a href="/view_recipe?q='+recipes[i][0]+'">\
-                          <img src="/static/recipe_images/'+recipes[i][5]+'" loading="lazy" class="card-img-top img-thumbnail" style="height: 200px; " alt="...">\
+                          <img src="/static/recipe_images/'+recipes[i][5]+'" loading="lazy" class="card-img-top " style="height: 200px; " alt="...">\
                           </a>\
                           <div class="card-body">\
                             <h5>'+recipes[i][1]+'</small></h5>\

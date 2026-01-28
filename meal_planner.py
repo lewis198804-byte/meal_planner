@@ -242,6 +242,15 @@ def search_recipes():
     con.close()
     return response
 
+@app.route("/settings")
+def settings():
+    
+    con = sqlite3.connect("database.db")
+    cur = con.cursor()
+    con.close()
+    return render_template("settings.html")
+
+
 @app.route("/get_recipe_overview/<recipe_id>", methods=['GET']) 
 def get_recipe_overview(recipe_id):
     con = sqlite3.connect("database.db")

@@ -91,15 +91,37 @@ def get_settings():
     return {"ok":"true","apiKey": OPENAI_API_KEY}
 
 @app.route("/update_settings", methods=['POST'])
-def update_key():
-    newKey = request.form['apiKey']
-    if newKey == OPENAI_API_KEY :
-        return {"ok": "same"}
-    elif newKey == "":
-        return {"ok": "false"}
-    else:
+def update_settings():
+    
         
-        return {"ok": "true"}
+    return {"ok": "true"}
+
+@app.route("/test_api")
+def test_api():
+    payload = {
+        'model': 'gpt-4o-mini',
+        'messages': [{
+            'role': 'user',
+            'content': [
+                {'type': 'text', 'text': '''
+                    Extract as RAW JSON only with no formatting. 
+                    This is a test API call sent from a python flask program to establish if the user entered 
+                    API key is correct and working. If this request is successful return output 
+                    will be read by a python program and should be structured as a json object as follows:
+                    {
+                      "ok": "true"
+                    }
+                    Output ONLY valid JSON. No other punctuation or whitespace
+                '''}
+            ]
+        }],
+        'max_tokens': 100,
+        'temperature': 0.1
+    }
+    testCall = openAiRequest(payload)
+    print(testCall)
+    return testCall
+
 
 @app.route("/add_recipe")
 def add_recipe():
@@ -600,6 +622,35 @@ def analyze_recipe():
         return jsonify({'errorText': '<p>There was an issue analyzing the image you submitted.</p><p>Check the image and try again</p><p><small>Only pictures of recipes will be processed!</small></p>','ok': 'false','recipe': result})
     
     return jsonify({'recipe': result, 'ok' : 'true','successText':'<p>Recipe image analyzed.</p><p>Take a look at the identified details and double check for accuracy!</p>'})
+
+
+
+
+def openAiRequest(payload):
+
+    headers = {
+        'Authorization': f'Bearer {OPENAI_API_KEY}',
+        'Content-Type': 'application/json'
+    }
+    
+    response = requests.post('https://api.openai.com/v1/chat/completions', 
+                           headers=headers, json=payload)
+    
+    if response.status_code != 200:
+        return jsonify({'error': response.json()}), 500
+    
+    result = response.json()['choices'][0]['message']['content']
+
+    if 'error' in result:
+
+        return jsonify({'errorText': '<p>There was an issue analyzing the image you submitted.</p><p>Check the image and try again</p><p><small>Only pictures of recipes will be processed!</small></p>','ok': 'false','recipe': result})
+    
+    return jsonify(result)
+
+
+
+
+
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0',port=5002)

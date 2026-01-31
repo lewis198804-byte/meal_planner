@@ -17,12 +17,12 @@
   
     <style>
 
-      .backupOptions{
-         max-height: 0;
+      #backupSettings{
+        max-height: 0;
         overflow: hidden;
-        transition: max-height 0.3s ease;
+        transition: max-height 0.9s ease;
       }
-      #toggle:checked ~ .backupOptions {
+      #backupSettings.backupVisible {
        max-height: 200px; /* adjust to fit your content */
       }
 
@@ -87,7 +87,7 @@
           <div class="row   mt-5">
             <div class="col col-12 col-md-6 text-start">
               <div class=" p-3">
-                Enter your Open AI API key to utilise the AI recipe generation feature.
+                Check your API key is detected and working correctly! 
               </div>
             </div>
             <div class="col col-12 col-md-6">
@@ -121,16 +121,19 @@
                 <div class="form-check form-switch">
                   <input class="form-check-input" type="checkbox" role="switch" id="backupToggleSwitch" onchange="toggleBackupSettingsVis()">
                 </div>
-                <div id="backupSettings">
-                  <select class="form-select" >
-                    <option>Every 24 hours</option>
-                    <option>Once a week</option>
-                    <option>Once a month</option>
+                <div id="backupSettings" class="mt-4">
+                  <select class="form-select" id="backupFrequency">
+                    <option value="24">Every 24 hours</option>
+                    <option value="week">Once a week</option>
+                    <option value="month">Once a month</option>
                   </select>
                   <label for="formFile" class="small">Backup Location</label>
-                  <input class="form-control" type="text" id="formFile" placeholder="/home/documents/backups">
-
+                  <input class="form-control" type="text" id="backupDir" placeholder="e.g. /home/documents/backups/">
+                  
                 </div>
+                <div class="small alert p-1 mt-2" id="backupAlert">
+                    <!--insert backup info here via JS-->
+                  </div>
                 </div>
             </div>
             <div class="col col-12 text-center">
@@ -154,8 +157,11 @@
 
       const backupSettings = document.getElementById("backupSettings");
       const backupToggle = document.getElementById("backupToggleSwitch");
+      const backupInput = document.getElementById("backupDir");
+      const backupFreq = document.getElementById("backupFrequency")
+      const backupAlert = document.getElementById("backupAlert")
       
-      backupSettings.hidden = true
+      //backupSettings.hidden = true
       saveOutcomeAlert.hidden = true;
       populateSettings()
 
@@ -164,19 +170,29 @@
       async function populateSettings(){
         const response = await fetch("/get_settings");
         const res = await response.json();
-
+        console.log(res)
         if (res.ok == "true"){
           if (res['apiKey'] != ""){
-            apiStatusText.innerText = "Success! API key configured in .env file"
+            apiStatusText.innerText = "Success! API key configured in .env file";
             apiKeyField.value = res['apiKey'];
             testButton.disabled = false;
-
+          if (res['backupLoc'] != ""){
+            //enable backup button, else disable it
+          }
           }
           else{
             apiStatusText.innerText = "No API key detected in .env file. Follow documentation to set your API key.";
             apiKeyField.value = "No API key detected";
           }
-
+          //backups are turned on
+          if (res.settings[1] == "on"){
+            backupToggle.checked = true;
+            backupSettings.classList.add("backupVisible")
+            if (res['settings'][2] != null){
+              backupInput.value = res.settings[2]
+              backupFreq.value = res.settings[3]
+            }
+          }
         }
         else{
           console.log("there was an error loading settings")
@@ -209,28 +225,70 @@
 
       function toggleBackupSettingsVis(){
         if (event.srcElement.checked){
-          backupSettings.hidden = false;
+          backupSettings.classList.add("backupVisible");
         }
         else if (!event.srcElement.checked){
-          backupSettings.hidden = true;
+          backupSettings.classList.remove("backupVisible");
         }
       }
 
+      async function backupManual(){
+        event.preventDefault()
+        const response = await fetch("/backupDb");
+        const res = await response.json();
+        console.log(res);
+      }
 
 
       async function saveSettings(){
-        event.preventDefault()
-        freshApiKey = apiKeyField.value
+        event.preventDefault();
+        if (saveOutcomeAlert.hidden == false){
+          saveOutcomeAlert.hidden = true;
+        }
+        
+        let error = false
+        formstuff = new FormData();
 
-        if (freshApiKey != ""){
-          formstuff = new FormData()
+        //backups are turned on 
+        if (backupToggle.checked){
 
-          const updateKey = await fetch("/update_settings", {method:'POST', body:formstuff});
-          const updateRes = await updateKey.json();
+          if (backupInput.value == ""){
+            //set alert to notify that you need to set a directory if backups are on.
+            if (!backupAlert.classList.contains("alert-danger")){
+              backupAlert.classList.add("alert-danger")
+            }
+            backupAlert.innerText = "You need to designate a directory to save your backups to."
+            error = true;
+          }
+          else if (backupInput.value.slice(-1) != "/"){
+            
+            backupAlert.innerText = "Your backup location must end in a / (because it's a directory!)"
+            error = true;
+          }
+          else
+          {
+            
+            formstuff.append("backupDirectory", backupInput.value);
+            formstuff.append("backupFreq",backupFreq.value);
+            formstuff.append("backupStatus", "on");
+
+          }
+        }
+        else
+        {
+          formstuff.append("backupStatus", "off");
+        }
+        //------------backup details dealt with--------------
+
+        if (error == false){
+          const updateSettings = await fetch("/update_settings", {method:'POST', body:formstuff});
+          const updateRes = await updateSettings.json();
           let outcome = ""
+
           if (updateRes.ok == "true"){
             console.log("settings has been updated");
-            outcome = updateRes.ok;
+            outcome = "Settings saved successfully!"
+            saveOutcomeAlert.classList.add("alert-success")
           }
           else if (updateRes.ok == "false"){
             console.log("did not update because of an error");
@@ -239,7 +297,7 @@
           saveOutcomeAlert.innerText = outcome;
           saveOutcomeAlert.hidden = false;
         }
-
+      
       }
 
 

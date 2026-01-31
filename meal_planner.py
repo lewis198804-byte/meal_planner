@@ -8,6 +8,7 @@ import json
 from dotenv import load_dotenv
 import os
 import uuid
+import shutil
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
@@ -88,12 +89,41 @@ def build_database():
 @app.route("/get_settings")
 def get_settings():
 
-    return {"ok":"true","apiKey": OPENAI_API_KEY}
+    con = sqlite3.connect("database.db")
+    cur = con.cursor()
+    cur.execute("SELECT * FROM settings")
+    settings = cur.fetchone()
+
+    return {"ok":"true","apiKey": OPENAI_API_KEY, "settings":settings}
 
 @app.route("/update_settings", methods=['POST'])
 def update_settings():
+    print(request.form)
+    con = sqlite3.connect("database.db")
+    cur = con.cursor()
     
-        
+    if request.form['backupStatus'] == "on":
+        backupDir = request.form['backupDirectory']
+        backupFreq = request.form['backupFreq']
+        backupStatus = request.form['backupStatus']
+        cur.execute("SELECT * from settings")
+        result = cur.fetchone()
+        if result == None:
+            cur.execute("INSERT INTO settings (backup_status,backup_location,backup_frequency) VALUES ('on',?,?)",(backupDir, backupFreq))
+        else:
+            cur.execute("UPDATE settings SET backup_status = 'on', backup_location = ?, backup_frequency = ?",(backupDir, backupFreq))
+    
+    elif request.form['backupStatus'] == "off":
+        cur.execute("SELECT * from settings")
+        result = cur.fetchone()
+        if result == None:
+            cur.execute("INSERT INTO settings (backup_status) VALUES ('off')")
+        else:
+            cur.execute("UPDATE settings SET backup_status = 'off', backup_location = '', backup_frequency = '' ")
+
+    
+    con.commit()
+    con.close()
     return {"ok": "true"}
 
 @app.route("/test_api")
@@ -288,6 +318,11 @@ def settings():
     con.close()
     return render_template("settings.html")
 
+
+@app.route("/backupDb")
+def backupDb():
+    shutil.copy("database.db","/home/lewis/Documents/")
+    return {"ok":"true"}
 
 @app.route("/get_recipe_overview/<recipe_id>", methods=['GET']) 
 def get_recipe_overview(recipe_id):

@@ -8,19 +8,38 @@ import json
 from dotenv import load_dotenv
 import os
 import uuid
-import shutil
-
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
-
-load_dotenv()
-OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
-app = Flask(__name__)
-app.json.sort_keys = False
+import backup_logic
 
 def database_con(query):
     con = sqlite3.connect("database.db")
     cur = con.cursor()
     return cur.execute(query)
+
+def startupBackupsCheck():
+    con = sqlite3.connect("database.db")
+    cur = con.cursor()
+    res = cur.execute("SELECT * FROM apscheduler_jobs")
+    result = res.fetchone()
+
+    if result == None:
+        print("no database backup jobs stored")
+    else:
+        #backups are on so start scheduler
+        backup_logic.start_scheduler()
+        print("database backups are on!")
+
+
+startupBackupsCheck()
+load_dotenv()
+
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+app = Flask(__name__)
+app.json.sort_keys = False
+
+
+
+
 
 
 def allowed_file(filename):
@@ -103,6 +122,8 @@ def update_settings():
     cur = con.cursor()
     
     if request.form['backupStatus'] == "on":
+        next_backup = backup_logic.turn_on_backups(7)
+        print("date to return: ",next_backup)
         backupDir = request.form['backupDirectory']
         backupFreq = request.form['backupFreq']
         backupStatus = request.form['backupStatus']
@@ -114,6 +135,7 @@ def update_settings():
             cur.execute("UPDATE settings SET backup_status = 'on', backup_location = ?, backup_frequency = ?",(backupDir, backupFreq))
     
     elif request.form['backupStatus'] == "off":
+        next_backup = backup_logic.turnOffBackups()
         cur.execute("SELECT * from settings")
         result = cur.fetchone()
         if result == None:
@@ -124,7 +146,7 @@ def update_settings():
     
     con.commit()
     con.close()
-    return {"ok": "true"}
+    return {"ok": "true","next_backup": next_backup}
 
 @app.route("/test_api")
 def test_api():
@@ -685,7 +707,8 @@ def openAiRequest(payload):
 
 
 
-
-
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0',port=5002)
+    app.run(debug=False, host='0.0.0.0',port=5002)
+
+
+

@@ -127,6 +127,14 @@
                     <option value="week">Once a week</option>
                     <option value="month">Once a month</option>
                   </select>
+                  <select class="form-select" id="backupTime">
+                    <option value="8am">8am</option>
+                    <option value="midday">Midday</option>
+                    <option value="8pm">8pm</option>
+                    <option value="midnight">Midnight</option>
+                    <option value="3am">3am</option>
+                  </select>
+                  
                   <label for="formFile" class="small">Backup Location</label>
                   <input class="form-control" type="text" id="backupDir" placeholder="e.g. /home/documents/backups/">
                   
@@ -160,6 +168,7 @@
       const backupInput = document.getElementById("backupDir");
       const backupFreq = document.getElementById("backupFrequency")
       const backupAlert = document.getElementById("backupAlert")
+      const backupTimeInput = document.getElementById("backupTime")
       
       //backupSettings.hidden = true
       saveOutcomeAlert.hidden = true;
@@ -245,7 +254,6 @@
         if (saveOutcomeAlert.hidden == false){
           saveOutcomeAlert.hidden = true;
         }
-        
         let error = false
         formstuff = new FormData();
 
@@ -283,11 +291,13 @@
         if (error == false){
           const updateSettings = await fetch("/update_settings", {method:'POST', body:formstuff});
           const updateRes = await updateSettings.json();
+          console.log(updateRes)
           let outcome = ""
 
           if (updateRes.ok == "true"){
+            
             console.log("settings has been updated");
-            outcome = "Settings saved successfully!"
+            outcome = "Settings saved successfully!" + updateRes.next_backup
             saveOutcomeAlert.classList.add("alert-success")
           }
           else if (updateRes.ok == "false"){

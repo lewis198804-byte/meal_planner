@@ -17,16 +17,23 @@ def database_con(query):
 
 def startupBackupsCheck():
     con = sqlite3.connect("database.db")
+    con.row_factory = sqlite3.Row
     cur = con.cursor()
-    res = cur.execute("SELECT * FROM apscheduler_jobs")
-    result = res.fetchone()
+    
+    backupsOnCheck = cur.execute("SELECT * FROM settings")
+    backupRes = backupsOnCheck.fetchone()
+    if backupRes['backup_status'] == "on":
+        res = cur.execute("SELECT * FROM apscheduler_jobs")
+        result = res.fetchone()
 
-    if result == None:
-        print("no database backup jobs stored")
-    else:
-        #backups are on so start scheduler
-        backup_logic.start_scheduler()
-        print("database backups are on!")
+        if result == None:
+            # backups are on but there is no backup job stored in the scheduler so add a backup job record 
+            backup_logic.turn_on_backups()
+            print("no backup jobs in the database but backups on. added job to database")
+        else:
+            #backups are on so start scheduler
+            backup_logic.start_scheduler()
+            print("database backups are on!")
 
 
 startupBackupsCheck()
@@ -112,8 +119,11 @@ def get_settings():
     cur = con.cursor()
     cur.execute("SELECT * FROM settings")
     settings = cur.fetchone()
+    schedulerStatus = backup_logic.schedulerStatus()
+    
+    #add in if backups are on, construct a backups object with scheduler status, next backup time etc
 
-    return {"ok":"true","apiKey": OPENAI_API_KEY, "settings":settings}
+    return {"ok":"true","apiKey": OPENAI_API_KEY, "settings":settings, "scheduler_status": schedulerStatus}
 
 @app.route("/update_settings", methods=['POST'])
 def update_settings():

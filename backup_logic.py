@@ -28,6 +28,9 @@ def turnOffBackups():
         scheduler.shutdown()
         print("scheduler shutdown")
     
+def getNextBackupTime():
+    backupJob = scheduler.get_job("backup_job")
+    return backupJob.next_run_time.ctime()
 
 def turn_on_backups(interval):
     scheduler.add_job(backup_recipe_db, "interval", days=interval,id="backup_job", replace_existing=True)
@@ -36,7 +39,9 @@ def turn_on_backups(interval):
     
     return backupJob.next_run_time.ctime()
     
-    
 
+    
+def schedulerStatus():
+    return scheduler.state
 
 

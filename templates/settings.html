@@ -137,7 +137,7 @@
                   
                   <label for="formFile" class="small">Backup Location</label>
                   <input class="form-control" type="text" id="backupDir" placeholder="e.g. /home/documents/backups/">
-                  
+                  <div id="schedulerStatusText"></div>
                 </div>
                 <div class="small alert p-1 mt-2" id="backupAlert">
                     <!--insert backup info here via JS-->
@@ -169,6 +169,8 @@
       const backupFreq = document.getElementById("backupFrequency")
       const backupAlert = document.getElementById("backupAlert")
       const backupTimeInput = document.getElementById("backupTime")
+
+      const schedulerStatusText = document.getElementById("schedulerStatusText")
       
       //backupSettings.hidden = true
       saveOutcomeAlert.hidden = true;
@@ -195,6 +197,12 @@
           }
           //backups are turned on
           if (res.settings[1] == "on"){
+            if (res.scheduler_status == 1){
+              schedulerStatusText.innerHTML = "<span style='color:green;'>The backup scheduler is running</span>";
+            }
+            else if(res.scheduler_status == 0){
+              schedulerStatusText.innerHTML = "<span style='color:red;'>Backup Scheduler is not currently running. Likely an error.</span>";
+            }
             backupToggle.checked = true;
             backupSettings.classList.add("backupVisible")
             if (res['settings'][2] != null){

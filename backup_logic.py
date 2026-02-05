@@ -32,7 +32,7 @@ def getNextBackupTime():
     backupJob = scheduler.get_job("backup_job")
     return backupJob.next_run_time.ctime()
 
-def turn_on_backups(interval):
+def turn_on_backups(interval:int):
     scheduler.add_job(backup_recipe_db, "interval", days=interval,id="backup_job", replace_existing=True)
     start_scheduler()
     backupJob = scheduler.get_job("backup_job")
@@ -42,6 +42,13 @@ def turn_on_backups(interval):
 
     
 def schedulerStatus():
-    return scheduler.state
+    backupJob = scheduler.get_job("backup_job")
+
+    if backupJob != None:
+        nextBackup = backupJob.next_run_time.ctime()
+    else:
+        nextBackup = "No Backup scheduled"
+    backupDeets = {"scheduler_status": scheduler.state, "next_backup": nextBackup}
+    return backupDeets
 
 

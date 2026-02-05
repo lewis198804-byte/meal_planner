@@ -119,11 +119,11 @@ def get_settings():
     cur = con.cursor()
     cur.execute("SELECT * FROM settings")
     settings = cur.fetchone()
-    schedulerStatus = backup_logic.schedulerStatus()
-    
-    #add in if backups are on, construct a backups object with scheduler status, next backup time etc
+    backupDetails = backup_logic.schedulerStatus()
 
-    return {"ok":"true","apiKey": OPENAI_API_KEY, "settings":settings, "scheduler_status": schedulerStatus}
+    #add in if backups are on, construct a backups object with scheduler status, next backup time etc
+    
+    return {"ok":"true","apiKey": OPENAI_API_KEY, "settings":settings, "backup_details": backupDetails}
 
 @app.route("/update_settings", methods=['POST'])
 def update_settings():
@@ -132,12 +132,14 @@ def update_settings():
     cur = con.cursor()
     
     if request.form['backupStatus'] == "on":
-        next_backup = backup_logic.turn_on_backups(7)
-        print("date to return: ",next_backup)
+        
         backupDir = request.form['backupDirectory']
-        backupFreq = request.form['backupFreq']
+        backupFreq = int(request.form['backupFreq'])
         backupStatus = request.form['backupStatus']
+        next_backup = backup_logic.turn_on_backups(backupFreq)
         cur.execute("SELECT * from settings")
+
+        
         result = cur.fetchone()
         if result == None:
             cur.execute("INSERT INTO settings (backup_status,backup_location,backup_frequency) VALUES ('on',?,?)",(backupDir, backupFreq))

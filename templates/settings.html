@@ -122,17 +122,11 @@
                   <input class="form-check-input" type="checkbox" role="switch" id="backupToggleSwitch" onchange="toggleBackupSettingsVis()">
                 </div>
                 <div id="backupSettings" class="mt-4">
+                  <div id="nextBackupText"></div>
                   <select class="form-select" id="backupFrequency">
-                    <option value="24">Every 24 hours</option>
-                    <option value="week">Once a week</option>
-                    <option value="month">Once a month</option>
-                  </select>
-                  <select class="form-select" id="backupTime">
-                    <option value="8am">8am</option>
-                    <option value="midday">Midday</option>
-                    <option value="8pm">8pm</option>
-                    <option value="midnight">Midnight</option>
-                    <option value="3am">3am</option>
+                    <option value="1">Daily</option>
+                    <option value="7">Every 7 days</option>
+                    <option value="14">Fortnightly</option>
                   </select>
                   
                   <label for="formFile" class="small">Backup Location</label>
@@ -171,6 +165,7 @@
       const backupTimeInput = document.getElementById("backupTime")
 
       const schedulerStatusText = document.getElementById("schedulerStatusText")
+      const nextBackupText = document.getElementById("nextBackupText")
       
       //backupSettings.hidden = true
       saveOutcomeAlert.hidden = true;
@@ -197,10 +192,12 @@
           }
           //backups are turned on
           if (res.settings[1] == "on"){
-            if (res.scheduler_status == 1){
+            //show status of the backup scheduler as this should be running. 
+            if (res.backup_details.scheduler_status == 1){
               schedulerStatusText.innerHTML = "<span style='color:green;'>The backup scheduler is running</span>";
+              nextBackupText.innerHTML = " Next backup is due on "+res.backup_details.next_backup;
             }
-            else if(res.scheduler_status == 0){
+            else if(res.backup_details.scheduler_status == 0){
               schedulerStatusText.innerHTML = "<span style='color:red;'>Backup Scheduler is not currently running. Likely an error.</span>";
             }
             backupToggle.checked = true;
@@ -305,7 +302,8 @@
           if (updateRes.ok == "true"){
             
             console.log("settings has been updated");
-            outcome = "Settings saved successfully!" + updateRes.next_backup
+            outcome = "Settings saved successfully!";
+            nextBackupText.innerText =  "Next backup is due on "+updateRes.next_backup
             saveOutcomeAlert.classList.add("alert-success")
           }
           else if (updateRes.ok == "false"){

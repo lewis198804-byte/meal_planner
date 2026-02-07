@@ -195,7 +195,9 @@
             //show status of the backup scheduler as this should be running. 
             if (res.backup_details.scheduler_status == 1){
               schedulerStatusText.innerHTML = "<span style='color:green;'>The backup scheduler is running</span>";
-              nextBackupText.innerHTML = " Next backup is due on "+res.backup_details.next_backup;
+              nextDate = new Date(res.backup_details.next_backup)
+              const localTime = nextDate.toLocaleString(); 
+              nextBackupText.innerHTML = " Next backup is due on "+localTime;
             }
             else if(res.backup_details.scheduler_status == 0){
               schedulerStatusText.innerHTML = "<span style='color:red;'>Backup Scheduler is not currently running. Likely an error.</span>";
@@ -303,7 +305,9 @@
             
             console.log("settings has been updated");
             outcome = "Settings saved successfully!";
-            nextBackupText.innerText =  "Next backup is due on "+updateRes.next_backup
+            nextDate = new Date(updateRes.next_backup)
+            const newLocalTime = nextDate.toLocaleString(); 
+            nextBackupText.innerText =  "Next backup is due on "+newLocalTime
             saveOutcomeAlert.classList.add("alert-success")
           }
           else if (updateRes.ok == "false"){

@@ -9,34 +9,44 @@ from dotenv import load_dotenv
 import os
 import uuid
 import backup_logic
+from datetime import datetime
+from PIL import Image, ImageOps
+import os
 
 def database_con(query):
     con = sqlite3.connect("database.db")
     cur = con.cursor()
     return cur.execute(query)
 
-def startupBackupsCheck():
+def startupSettingsCheck():
     con = sqlite3.connect("database.db")
     con.row_factory = sqlite3.Row
     cur = con.cursor()
     
-    backupsOnCheck = cur.execute("SELECT * FROM settings")
-    backupRes = backupsOnCheck.fetchone()
-    if backupRes['backup_status'] == "on":
-        res = cur.execute("SELECT * FROM apscheduler_jobs")
-        result = res.fetchone()
+    settingsCheck = cur.execute("SELECT * FROM settings")
+    settingsRes = settingsCheck.fetchone()
+    if settingsRes is not None:
+        if settingsRes['backup_status'] == "on":
+            res = cur.execute("SELECT * FROM apscheduler_jobs")
+            result = res.fetchone()
 
-        if result == None:
-            # backups are on but there is no backup job stored in the scheduler so add a backup job record 
-            backup_logic.turn_on_backups()
-            print("no backup jobs in the database but backups on. added job to database")
-        else:
-            #backups are on so start scheduler
-            backup_logic.start_scheduler()
-            print("database backups are on!")
+            if result == None:
+                # backups are on but there is no backup job stored in the scheduler so add a backup job record 
+                backup_logic.turn_on_backups()
+                print("no backup jobs in the database but backups on. added job to database")
+                con.close()
+            else:
+                #backups are on so start scheduler
+                backup_logic.start_scheduler()
+                print("database backups are on!")
+    else:
+        #likely first running of the program so insert empty settings row
+        cur.execute("INSERT INTO settings (backup_status,backup_location,backup_frequency) VALUES ('off','','')")
+        con.commit()
+        con.close()
 
 
-startupBackupsCheck()
+startupSettingsCheck()
 load_dotenv()
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
@@ -53,11 +63,9 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-from PIL import Image
-import os
 
-from PIL import Image, ImageOps
-import os
+
+
 
 def save_recipe_image(uploaded_file, output_path, max_size=800):
     """Process with correct orientation."""
@@ -121,13 +129,11 @@ def get_settings():
     settings = cur.fetchone()
     backupDetails = backup_logic.schedulerStatus()
 
-    #add in if backups are on, construct a backups object with scheduler status, next backup time etc
     
     return {"ok":"true","apiKey": OPENAI_API_KEY, "settings":settings, "backup_details": backupDetails}
 
 @app.route("/update_settings", methods=['POST'])
 def update_settings():
-    print(request.form)
     con = sqlite3.connect("database.db")
     cur = con.cursor()
     
@@ -137,25 +143,14 @@ def update_settings():
         backupFreq = int(request.form['backupFreq'])
         backupStatus = request.form['backupStatus']
         next_backup = backup_logic.turn_on_backups(backupFreq)
-        cur.execute("SELECT * from settings")
 
-        
-        result = cur.fetchone()
-        if result == None:
-            cur.execute("INSERT INTO settings (backup_status,backup_location,backup_frequency) VALUES ('on',?,?)",(backupDir, backupFreq))
-        else:
-            cur.execute("UPDATE settings SET backup_status = 'on', backup_location = ?, backup_frequency = ?",(backupDir, backupFreq))
+        cur.execute("UPDATE settings SET backup_status = 'on', backup_location = ?, backup_frequency = ?",(backupDir, backupFreq))
     
     elif request.form['backupStatus'] == "off":
         next_backup = backup_logic.turnOffBackups()
-        cur.execute("SELECT * from settings")
-        result = cur.fetchone()
-        if result == None:
-            cur.execute("INSERT INTO settings (backup_status) VALUES ('off')")
-        else:
-            cur.execute("UPDATE settings SET backup_status = 'off', backup_location = '', backup_frequency = '' ")
+        
+        cur.execute("UPDATE settings SET backup_status = 'off', backup_location = '', backup_frequency = '' ")
 
-    
     con.commit()
     con.close()
     return {"ok": "true","next_backup": next_backup}

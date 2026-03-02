@@ -5,57 +5,19 @@ import requests
 import base64
 import json
 from dotenv import load_dotenv
-import os
 import uuid
 import backup_logic
 from datetime import datetime
 from PIL import Image, ImageOps
 import os
 
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
+
 def database_con(query):
     con = sqlite3.connect("data/database.db")
     cur = con.cursor()
     return cur.execute(query)
-
-
-
-def startupSettingsCheck():
-    con = sqlite3.connect("data/database.db")
-    con.row_factory = sqlite3.Row
-    cur = con.cursor()
-    
-    settingsCheck = cur.execute("SELECT * FROM settings")
-    settingsRes = settingsCheck.fetchone()
-    if settingsRes is not None:
-        if settingsRes['backup_status'] == "on":
-            res = cur.execute("SELECT * FROM apscheduler_jobs")
-            result = res.fetchone()
-
-            if result == None:
-                # backups are on but there is no backup job stored in the scheduler so add a backup job record 
-                backup_logic.turn_on_backups()
-                print("no backup jobs in the database but backups on. added job to database")
-                con.close()
-            else:
-                #backups are on so start scheduler
-                backup_logic.start_scheduler()
-                print("database backups are on!")
-    else:
-        #likely first running of the program so insert empty settings row
-        cur.execute("INSERT INTO settings (backup_status,backup_location,backup_frequency) VALUES ('off','','')")
-        con.commit()
-        con.close()
-
-
-startupSettingsCheck()
-load_dotenv()
-
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
-OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
-app = Flask(__name__)
-app.json.sort_keys = False
-
-
 
 
 
@@ -79,15 +41,6 @@ def save_recipe_image(uploaded_file, output_path, max_size=800):
     # Resize & save
     img.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
     img.save(output_path, 'JPEG', quality=85, optimize=True, subsampling=0)
-
-
-
-
-@app.route("/")
-def home():
-    return render_template("index.html")
-
-
 
 def init_database():
     con = sqlite3.connect("data/database.db")
@@ -126,6 +79,19 @@ def init_database():
     con.commit()
     con.close()
     return "database built"
+
+
+load_dotenv()
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+app = Flask(__name__)
+app.json.sort_keys = False
+
+
+@app.route("/")
+def home():
+    return render_template("index.html")
+
+
 
 @app.route("/get_settings")
 def get_settings():
@@ -709,8 +675,6 @@ def analyze_recipe():
     return jsonify({'recipe': result, 'ok' : 'true','successText':'<p>Recipe image analyzed.</p><p>Take a look at the identified details and double check for accuracy!</p>'})
 
 
-
-
 def openAiRequest(payload):
 
     headers = {
@@ -733,11 +697,38 @@ def openAiRequest(payload):
     return jsonify(result)
 
 
+def startupSettingsCheck():
+    con = sqlite3.connect("data/database.db")
+    con.row_factory = sqlite3.Row
+    cur = con.cursor()
+    
+    settingsCheck = cur.execute("SELECT * FROM settings")
+    settingsRes = settingsCheck.fetchone()
+    if settingsRes is not None:
+        if settingsRes['backup_status'] == "on":
+            res = cur.execute("SELECT * FROM apscheduler_jobs")
+            result = res.fetchone()
+
+            if result == None:
+                # backups are on but there is no backup job stored in the scheduler so add a backup job record 
+                backup_logic.turn_on_backups()
+                print("no backup jobs in the database but backups on. added job to database")
+                con.close()
+            else:
+                #backups are on so start scheduler
+                backup_logic.start_scheduler()
+                print("database backups are on!")
+    else:
+        #likely first running of the program so insert empty settings row
+        cur.execute("INSERT INTO settings (backup_status,backup_location,backup_frequency) VALUES ('off','','')")
+        con.commit()
+        con.close()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     init_database()
-    app.run(debug=False, host='0.0.0.0',port=5002)
-
+    load_dotenv()
+    startupSettingsCheck()
+    app.run(debug=False, host='0.0.0.0', port=5002)  # Keep port=5002
 
 

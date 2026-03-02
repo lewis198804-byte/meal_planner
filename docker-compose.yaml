@@ -2,7 +2,7 @@ services:
   app:
     build: .
     ports:
-      - "5000:5000"
+      - "5002:5002"
     volumes:
       - ./data:/app/data  # SQLite DB + backups persist here
     environment:

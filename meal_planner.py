@@ -1,6 +1,5 @@
 from flask import Flask, render_template, request, jsonify
 from werkzeug.utils import secure_filename
-from PIL import Image
 import sqlite3
 import requests
 import base64

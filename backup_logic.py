@@ -4,7 +4,6 @@ from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from datetime import datetime, timezone
 import sqlite3
 from pathlib import Path
-import shutil
 #---------------------code dealing with backup for recipe DB-----------------------
 
 

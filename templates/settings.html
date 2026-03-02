@@ -133,7 +133,7 @@
                   <label for="formFile" class="small">Backup Location</label>
                   <input class="form-control" type="text" id="backupDir" placeholder="e.g. /home/documents/backups/">
                   <button class="btn btn-primary" id="backupTestButton" onclick="testBackupDir()"> Test Backup Directory</button>
-                  <button class="btn btn-primary" id="manualBackupButton" onclick="backupManual()"> Manual Backup</button>
+                  <button class="btn btn-primary" id="m_backup" onclick="backupManual()"> Manual Backup</button>
                   <div id="backupTestText"></div>
                 </div>
                 <div class="small alert p-1 mt-2 alert-danger" id="backupAlert">
@@ -171,12 +171,12 @@
       const nextBackupText = document.getElementById("nextBackupText")
       
       const backupTestText = document.getElementById("backupTestText")
-      const manualBackupButton = document.getElementById("manualbackupButton")
+      const manualBackupButton = document.getElementById("m_backup")
 
       //backupSettings.hidden = true
       saveOutcomeAlert.hidden = true;
       backupAlert.hidden = true;
-      manualBackupButton.hidden = true;
+      manualBackupButton.disabled = true;
       populateSettings()
 
 
@@ -214,7 +214,7 @@
             backupSettings.classList.add("backupVisible")
             if (res['settings'][2] != null){
               backupInput.value = res.settings[2]
-              manualBackupButton.hidden = false;
+              manualBackupButton.disabled = false;
               backupFreq.value = res.settings[3]
             }
           }
@@ -326,6 +326,7 @@
             console.log("settings has been updated");
             outcome = "Settings saved successfully!";
             nextDate = new Date(updateRes.next_backup)
+            manualBackupButton.disabled = false;
             const newLocalTime = nextDate.toLocaleString(); 
             nextBackupText.innerText =  "Next backup is due on "+newLocalTime
             saveOutcomeAlert.classList.add("alert-success")

@@ -13,12 +13,14 @@ from PIL import Image, ImageOps
 import os
 
 def database_con(query):
-    con = sqlite3.connect("database.db")
+    con = sqlite3.connect("data/database.db")
     cur = con.cursor()
     return cur.execute(query)
 
+
+
 def startupSettingsCheck():
-    con = sqlite3.connect("database.db")
+    con = sqlite3.connect("data/database.db")
     con.row_factory = sqlite3.Row
     cur = con.cursor()
     
@@ -86,11 +88,11 @@ def home():
     return render_template("index.html")
 
 
-@app.route("/database_build")
-def build_database():
-    con = sqlite3.connect("database.db")
+
+def init_database():
+    con = sqlite3.connect("data/database.db")
     cur = con.cursor()
-    cur.execute("CREATE TABLE recipes (" \
+    cur.execute("CREATE TABLE IF NOT EXISTS recipes (" \
     "id INTEGER PRIMARY KEY AUTOINCREMENT," \
     "name TEXT," \
     "location TEXT," \
@@ -98,11 +100,20 @@ def build_database():
     "instructions JSON," \
     "photo_path TEXT,"\
     "difficulty TEXT)")
-    cur.execute("CREATE TABLE ingredients (" \
+    cur.execute("CREATE TABLE IF NOT EXISTS ingredients (" \
     "id INTEGER PRIMARY KEY AUTOINCREMENT," \
     "name TEXT," \
     "recipe_id INTEGER)")
-    cur.execute("CREATE TABLE meal_plans (" \
+    cur.execute("CREATE TABLE IF NOT EXISTS apscheduler_jobs (" \
+    "id VARCHAR(191) PRIMARY KEY AUTOINCREMENT," \
+    "next_run_time FLOAT," \
+    "job_state BLOB)")
+    cur.execute("CREATE TABLE IF NOT EXISTS settings (" \
+    "id INTEGER PRIMARY KEY AUTOINCREMENT," \
+    "backup_status TEXT," \
+    "backup_location INTEGER," \
+    "backup_frequency INTEGER)")
+    cur.execute("CREATE TABLE IF NOT EXISTS meal_plans (" \
     "id INTEGER PRIMARY KEY AUTOINCREMENT," \
     "monday_recipe_id INTEGER," \
     "tuesday_recipe_id INTEGER," \
@@ -119,7 +130,7 @@ def build_database():
 @app.route("/get_settings")
 def get_settings():
 
-    con = sqlite3.connect("database.db")
+    con = sqlite3.connect("data/database.db")
     cur = con.cursor()
     cur.execute("SELECT * FROM settings")
     settings = cur.fetchone()
@@ -130,7 +141,7 @@ def get_settings():
 
 @app.route("/update_settings", methods=['POST'])
 def update_settings():
-    con = sqlite3.connect("database.db")
+    con = sqlite3.connect("data/database.db")
     cur = con.cursor()
     
     if request.form['backupStatus'] == "on":
@@ -214,7 +225,7 @@ def save_ai_recipe():
     description = request.form['description']
     category = request.form['category']
   
-    con = sqlite3.connect("database.db")
+    con = sqlite3.connect("data/database.db")
     cur = con.cursor()
 
     error_text = ""
@@ -319,7 +330,7 @@ def get_recipes():
     else:
         paginationQuery = ""
 
-    con = sqlite3.connect("database.db")
+    con = sqlite3.connect("data/database.db")
     cur = con.cursor()
     selectQuery = "SELECT * FROM recipes"+category+""+paginationQuery+"ORDER BY id "+orderDir+" LIMIT 5"
     print(selectQuery)
@@ -338,7 +349,7 @@ def shopping_list():
 @app.route("/search_recipes")
 def search_recipes():
     search_term = request.args.get('q', '').strip()
-    con = sqlite3.connect("database.db")
+    con = sqlite3.connect("data/database.db")
     cur = con.cursor()
     cur.execute("SELECT * FROM recipes WHERE name LIKE ? OR tags LIKE ?", (f'%{search_term}%',)*2)
     response = cur.fetchall()
@@ -348,7 +359,7 @@ def search_recipes():
 @app.route("/settings")
 def settings():
     
-    con = sqlite3.connect("database.db")
+    con = sqlite3.connect("data/database.db")
     cur = con.cursor()
     con.close()
     return render_template("settings.html")
@@ -365,7 +376,7 @@ def backupDb():
 
 @app.route("/get_recipe_overview/<recipe_id>", methods=['GET']) 
 def get_recipe_overview(recipe_id):
-    con = sqlite3.connect("database.db")
+    con = sqlite3.connect("data/database.db")
     con.row_factory = sqlite3.Row
     cur = con.cursor()
     
@@ -383,7 +394,7 @@ def get_recipe_overview(recipe_id):
 def save_recipe_day_change():
     day = request.form['dayToChange']
     newRecipe = request.form['newRecipe']
-    con = sqlite3.connect("database.db")
+    con = sqlite3.connect("data/database.db")
     cur = con.cursor()
     cur.execute("UPDATE meal_plans SET "+day+" = ? WHERE current_plan = 1", (newRecipe,))
     con.commit()
@@ -393,7 +404,7 @@ def save_recipe_day_change():
 
 @app.route("/get_menu", methods=['POST'])
 def get_menu():
-    con = sqlite3.connect("database.db")
+    con = sqlite3.connect("data/database.db")
     con.row_factory = sqlite3.Row
     cur = con.cursor()
     
@@ -430,7 +441,7 @@ def get_menu():
 
 @app.route("/gen_new_meal_plan", methods=['POST'])
 def gen_new_plan():
-    con = sqlite3.connect("database.db")
+    con = sqlite3.connect("data/database.db")
     con.row_factory = sqlite3.Row
     cur = con.cursor()
     
@@ -464,7 +475,7 @@ def save_new_plan():
     for day in request.form:
         recipe_ids.append(request.form[day])
     recipes_to_enter = ','.join(recipe_ids)    
-    con = sqlite3.connect("database.db")
+    con = sqlite3.connect("data/database.db")
     cur = con.cursor()
     cur.execute("UPDATE meal_plans SET current_plan = 0 WHERE current_plan = 1")
     print("columns:",columns,"recipes to enter",recipes_to_enter)
@@ -477,7 +488,7 @@ def save_new_plan():
 @app.route("/del_recipe")
 def delete_recipe():
     recipe_id = request.args.get('q', '').strip()
-    con = sqlite3.connect("database.db")
+    con = sqlite3.connect("data/database.db")
     cur = con.cursor()
     cur.execute("DELETE FROM recipes WHERE id = ?", (recipe_id,))
     cur.execute("DELETE FROM ingredients WHERE recipe_id = ?",(recipe_id,))
@@ -489,7 +500,7 @@ def delete_recipe():
 def view_recipe():
     recipe_id = request.args.get('q','').strip()
     print(recipe_id)
-    con = sqlite3.connect("database.db")
+    con = sqlite3.connect("data/database.db")
     con.row_factory = sqlite3.Row
     cur = con.cursor()
     cur.execute("SELECT * FROM recipes WHERE id = ?", (recipe_id,))
@@ -502,7 +513,7 @@ def view_recipe():
 @app.route("/edit_recipe")
 def edit_recipe():
     recipe_id = request.args.get('q', '').strip()
-    con = sqlite3.connect("database.db")
+    con = sqlite3.connect("data/database.db")
     con.row_factory = sqlite3.Row
     cur = con.cursor()
     cur.execute("SELECT * FROM recipes WHERE id = ?", (recipe_id,))
@@ -519,7 +530,7 @@ def edit_recipe():
 
 @app.route("/process_params", methods=['POST'])
 def process_params():
-    con = sqlite3.connect("database.db")
+    con = sqlite3.connect("data/database.db")
     con.row_factory = sqlite3.Row
     cur = con.cursor()
     if request.form:
@@ -605,7 +616,7 @@ def process_params():
 @app.route("/generate_shopping_list")
 def generate_shopping_list():
 
-    con = sqlite3.connect("database.db")
+    con = sqlite3.connect("data/database.db")
     con.row_factory = sqlite3.Row
     cur = con.cursor()
     cur.execute("SELECT monday_recipe_id , tuesday_recipe_id , wednesday_recipe_id , thursday_recipe_id , friday_recipe_id , saturday_recipe_id , sunday_recipe_id FROM meal_plans WHERE current_plan = 1")
@@ -725,6 +736,7 @@ def openAiRequest(payload):
 
 
 if __name__ == '__main__':
+    init_database()
     app.run(debug=False, host='0.0.0.0',port=5002)
 
 

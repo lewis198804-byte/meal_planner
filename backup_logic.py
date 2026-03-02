@@ -12,20 +12,20 @@ now = datetime.now(timezone.utc)
 
 
 jobstore = {
-    'default': SQLAlchemyJobStore(url='sqlite:///database.db')
+    'default': SQLAlchemyJobStore(url='sqlite:///data/database.db')
 }
 scheduler = BackgroundScheduler(timezone=timezone.utc)
 scheduler.configure(jobstores=jobstore)
 
 
 def backup_recipe_db():
-    con = sqlite3.connect("database.db")
+    con = sqlite3.connect("data/database.db")
     con.row_factory = sqlite3.Row
     cur = con.cursor()
     grabLocation = cur.execute("SELECT backup_location FROM settings")
     locRes = grabLocation.fetchone()
     con.close()
-    databasePath = Path("database.db")
+    databasePath = Path("data/database.db")
     try:
         shutil.copy2(databasePath,locRes['backup_location'])
         return True
@@ -71,7 +71,7 @@ def start_scheduler():
     if backupJob.next_run_time < now:
         #backup time has already passed, reset job with new backup time. could have occurred by the program being offline for 
         #extended period of time and missing a backup job. 
-        con = sqlite3.connect("database.db")
+        con = sqlite3.connect("data/database.db")
         con.row_factory = sqlite3.Row
         cur = con.cursor()
         grabFreq = cur.execute("SELECT backup_frequency FROM settings")
@@ -115,7 +115,7 @@ def schedulerStatus():
     backupJob = scheduler.get_job("backup_job")
 
     if backupJob is not None:
-        con = sqlite3.connect("database.db")
+        con = sqlite3.connect("data/database.db")
         con.row_factory = sqlite3.Row
         cur = con.cursor()
         cur.execute("SELECT next_run_time FROM apscheduler_jobs WHERE id = ?",("backup_job",))

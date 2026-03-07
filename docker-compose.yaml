@@ -1,4 +1,11 @@
 services:
+  init-dirs:
+    image: busybox
+    command: mkdir -p /data /static/recipe_images && chmod 777 /data /static/recipe_images
+    volumes:
+      - ./data:/data
+      - ./static/recipe_images:/static/recipe_images
+
   app:
     build: .
     ports:
@@ -6,5 +13,8 @@ services:
     volumes:
       - ./data:/app/data  # SQLite DB + backups persist here
       - ./.env:/app/.env
+      - ./static/recipe_images:/app/static/recipe_images  # ← NEW: Images safe forever
     environment:
       - FLASK_ENV=production
+    depends_on:
+      - init-dirs

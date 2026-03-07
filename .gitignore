@@ -6,9 +6,6 @@ env/
 .venv/
 thisenv/
 
-# Your recipe books
-recipe_books/
-
 # recipe photos
 static/recipe_images/
 

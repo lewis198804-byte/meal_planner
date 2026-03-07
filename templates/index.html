@@ -258,11 +258,18 @@
               // if the recipe id does not == 0 show the relevant recipe card
               // 0 meaning a recipe was not assigned when the meal plan was made. 
               if (dayObj[day]['id'] != 0){
+                console.log(recipe['photo_path'])
+                if (recipe['photo_path'] == "defaultImage.jpg"){
+                  photoPath = "/static/defaultImage.jpg";
+                }
+                else{
+                  photoPath = "/static/recipe_images/"+recipe['photo_path']
+                }
                 meal_plan_contents += '\
                 <div class="col ">\
                   <div class="card '+highlight_today+' mt-4 position-relative animate_animated animate__bounceIn">\
                       <a href="/view_recipe?q='+recipe['id']+'" >\
-                    <img onload="setLoaded()" src="/static/recipe_images/'+recipe['photo_path']+'" class="recipe-img card-img-top img-thumbnail" style="height: 150px; object-fit: cover;" alt="...">\
+                    <img onload="setLoaded()" src="'+photoPath+'" class="recipe-img card-img-top img-thumbnail" style="height: 150px; object-fit: cover;" alt="...">\
                     </a>\
                     <div class="" style="position:absolute;top:20px;right:20px;">\
                         <a href="/view_recipe?q='+recipe['id']+'" onclick="setSearchModal(\''+day+'\',\'false\')" class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#changeRecipeModal">Change</a><br>\

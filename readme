@@ -1,0 +1,5 @@
+1. add to portainer via git repository https://github.com/lewis198804-byte/plate_planner.git
+
+2. compose path : docker-compose.yaml
+
+3. Create .env file in container root and add open_ai_key

@@ -20,5 +20,4 @@ Thumbs.db
 *.sqlite*
 .env
 
-sql_queries.sql.env
-.env
+sql_queries.sql

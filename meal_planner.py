@@ -115,21 +115,17 @@ def update_settings():
     cur = con.cursor()
     
     if request.form['backupStatus'] == "on":
-        backupDir = request.form['backupDirectory']
-        direcoryCheck = backup_logic.checkBackupDir(backupDir)
-        if direcoryCheck['testResult'] == True:
-            backupFreq = int(request.form['backupFreq'])
-            backupStatus = request.form['backupStatus']
-            next_backup = backup_logic.turn_on_backups(backupFreq)
 
-            cur.execute("UPDATE settings SET backup_status = 'on', backup_location = ?, backup_frequency = ?",(backupDir, backupFreq))
-        else:
-            return {"ok": "false","error" : "<span style='color:red'>Cannot write to selected backup directory</span>"}
+        backupFreq = int(request.form['backupFreq'])
+        backupStatus = request.form['backupStatus']
+        next_backup = backup_logic.turn_on_backups(backupFreq)
 
+        cur.execute("UPDATE settings SET backup_status = 'on', backup_frequency = ?",(backupFreq))
+    
 
     elif request.form['backupStatus'] == "off":
         next_backup = backup_logic.turnOffBackups()
-        cur.execute("UPDATE settings SET backup_status = 'off', backup_location = '', backup_frequency = '' ")
+        cur.execute("UPDATE settings SET backup_status = 'off', backup_frequency = '' ")
 
     con.commit()
     con.close()

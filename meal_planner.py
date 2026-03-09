@@ -337,7 +337,7 @@ def settings():
 @app.route("/backupDb")
 def backupDb():
     backupResult = backup_logic.backup_recipe_db()
-    if backupResult == True:
+    if backupResult != False:
         return {"ok":"true","text":"<span style='color:green'>Manual backup successful</span>"}
     else:
         return {"ok":"false","text":"<span style='color:red'>Error, backup not created</span>"}
@@ -465,7 +465,7 @@ def remove_meal():
     cur.execute("UPDATE meal_plans SET "+clickedDay+" = 0 WHERE current_plan = 1")
     con.commit()
     con.close()
-    
+
     return {"result" : "True"}
     
 

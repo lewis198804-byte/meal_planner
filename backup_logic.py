@@ -25,7 +25,7 @@ def backup_recipe_db():
     
     # Timestamped filename
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    backup_file = backup_base / f"database_backup_{timestamp}.db"
+    backup_file = backup_base / f"database_backup.db"
     
     database_path = Path("data/database.db")
     

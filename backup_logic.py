@@ -19,23 +19,24 @@ scheduler.configure(jobstores=jobstore)
 
 
 def backup_recipe_db():
-    con = sqlite3.connect("data/database.db")
-    con.row_factory = sqlite3.Row
-    cur = con.cursor()
-    grabLocation = cur.execute("SELECT backup_location FROM settings")
-    locRes = grabLocation.fetchone()
-    con.close()
-    databasePath = Path("data/database.db")
+    # Fixed mount path - no DB query needed
+    backup_base = Path('/app/backups')
+    backup_base.mkdir(exist_ok=True, parents=True)
+    
+    # Timestamped filename
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    backup_file = backup_base / f"database_backup_{timestamp}.db"
+    
+    database_path = Path("data/database.db")
+    
     try:
-        shutil.copy2(databasePath,locRes['backup_location'])
-        return True
+        # Copy with metadata preserved
+        shutil.copy2(database_path, backup_file)
+        print(f"Backup created: {backup_file}")
+        return str(backup_file)  # Return path for UI feedback
     except Exception as e:
-        print("backup not copied",e)
-        return  False
-
-    print("scheduled print command")
-
-
+        print(f"Backup failed: {e}")
+        return False
 
 def checkBackupDir(directory):
     

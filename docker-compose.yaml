@@ -14,7 +14,9 @@ services:
       - ./data:/app/data  # SQLite DB + backups persist here
       - ./.env:/app/.env
       - ./static/recipe_images:/app/static/recipe_images  # ← NEW: Images safe forever
+      - ${BACKUP_DIR:-/tmp/backups}:/app/backups
     environment:
       - FLASK_ENV=production
+      - BACKUP_DIR=${BACKUP_DIR:-/tmp/backups}
     depends_on:
       - init-dirs

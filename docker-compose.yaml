@@ -1,3 +1,4 @@
+
 services:
   init-dirs:
     image: busybox
@@ -7,19 +8,21 @@ services:
     volumes:
       - ./data:/data
       - ./static/recipe_images:/static/recipe_images
-      - ${BACKUP_DIR:-./backups}:/app/backups
+      - ${BACKUP_DIR:-./backups}:/app/backups  
 
   app:
     build: .
     ports:
       - "5002:5002"
-    env_file:  
-      - .env
     volumes:
+      - ./.env:/app/.env
       - ./data:/app/data
       - ./static/recipe_images:/app/static/recipe_images
-      - ${BACKUP_DIR:-./backups}:/app/backups 
+      - ${BACKUP_DIR:-./backups}:/app/backups  
+     
+
     environment:
       - FLASK_ENV=production
+      - BACKUP_DIR=${BACKUP_DIR:-./backups} 
     depends_on:
       - init-dirs

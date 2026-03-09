@@ -197,6 +197,7 @@
             apiKeyField.value = "No API key detected";
           }
           //backups are turned on
+          backup_loc_text.innerText = res.backup_location
           if (res.settings[1] == "on"){
             //show status of the backup scheduler as this should be running. 
             if (res.backup_details.scheduler_status == 1){
@@ -213,7 +214,7 @@
             if (res['settings'][2] != null){
               backupFreq.value = res.settings[3]
             }
-            backup_loc_text.innerText = res.backup_location
+            
           }
         }
         else{

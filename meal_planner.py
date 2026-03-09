@@ -86,7 +86,7 @@ def init_database():
 
 load_dotenv()
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
-BACKUP_DIR = os.getenv('BACKUP_DIR')
+BACKUP_DIR = os.getenv('BACKUP_DIR', "Using Default")
 
 app = Flask(__name__)
 app.json.sort_keys = False
@@ -108,7 +108,7 @@ def get_settings():
     backupDetails = backup_logic.schedulerStatus()
 
     
-    return {"ok":"true","apiKey": OPENAI_API_KEY, "settings":settings, "backup_details": backupDetails}
+    return {"ok":"true","apiKey": OPENAI_API_KEY, "settings":settings, "backup_details": backupDetails, "backup_location": BACKUP_DIR}
 
 @app.route("/update_settings", methods=['POST'])
 def update_settings():

@@ -131,8 +131,7 @@
                   </select>
                   
                   <label for="formFile" class="small">Backup Location</label>
-                  <input class="form-control" type="text" id="backupDir" placeholder="e.g. /home/documents/backups/">
-                  <button class="btn btn-primary" id="backupTestButton" onclick="testBackupDir()"> Test Backup Directory</button>
+                  <span is="backup_loc_text"></span>
                   <button class="btn btn-primary" id="m_backup" onclick="backupManual()"> Manual Backup</button>
                   <div id="backupTestText"></div>
                 </div>
@@ -172,6 +171,7 @@
       
       const backupTestText = document.getElementById("backupTestText")
       const manualBackupButton = document.getElementById("m_backup")
+      const backup_loc_text = document.getElementById("backup_loc_text")
 
       //backupSettings.hidden = true
       saveOutcomeAlert.hidden = true;
@@ -217,6 +217,7 @@
               manualBackupButton.disabled = false;
               backupFreq.value = res.settings[3]
             }
+            backup_loc_text.innerText = res.backup_location
           }
         }
         else{

@@ -454,6 +454,21 @@ def save_new_plan():
 
     return {"success" : "ok"}
 
+
+@app.route("/remove_meal", methods=['POST'])
+def remove_meal():
+    clickedDay = request.form["dayToChange"]
+    print("the day that you pressed was", clickedDay)
+    con = sqlite3.connect("data/database.db")
+    cur = con.cursor()
+
+    cur.execute("UPDATE meal_plans SET "+clickedDay+" = 0 WHERE current_plan = 1")
+    con.commit()
+    con.close()
+    
+    return {"result" : "True"}
+    
+
 @app.route("/del_recipe")
 def delete_recipe():
     recipe_id = request.args.get('q', '').strip()

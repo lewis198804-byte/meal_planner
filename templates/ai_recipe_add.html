@@ -359,10 +359,10 @@
 
             const insert_response = await response.json();
             if (insert_response.ok){
-               
-                alert_field.innerHTML = insert_response.success
-                toggleSuccessAlert("on")
-                console.log("recipe saved successfully")
+                window.location.href = "/view_recipe?q="+insert_response.recipe_Id;
+                //alert_field.innerHTML = insert_response.success
+                //toggleSuccessAlert("on")
+                //console.log("recipe saved successfully")
             }
             else {
                 alert_field.innerHTML = insert_response.error

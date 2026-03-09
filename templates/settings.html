@@ -131,7 +131,7 @@
                   </select>
                   
                   <label for="formFile" class="small">Backup Location</label>
-                  <span is="backup_loc_text"></span>
+                  <div id="backup_loc_text"></div>
                   <button class="btn btn-primary" id="m_backup" onclick="backupManual()"> Manual Backup</button>
                   <div id="backupTestText"></div>
                 </div>
@@ -161,7 +161,6 @@
 
       const backupSettings = document.getElementById("backupSettings");
       const backupToggle = document.getElementById("backupToggleSwitch");
-      const backupInput = document.getElementById("backupDir");
       const backupFreq = document.getElementById("backupFrequency")
       const backupAlert = document.getElementById("backupAlert")
       const backupTimeInput = document.getElementById("backupTime")
@@ -213,7 +212,6 @@
             backupToggle.checked = true;
             backupSettings.classList.add("backupVisible")
             if (res['settings'][2] != null){
-              backupInput.value = res.settings[2]
               manualBackupButton.disabled = false;
               backupFreq.value = res.settings[3]
             }
@@ -267,20 +265,6 @@
 
         
       }
-
-      async function testBackupDir(){
-        event.preventDefault()
-        formdata = new FormData()
-        formdata.append("backupDir", backupInput.value)
-        const response = await fetch("/test_backup_dir",{
-          method: 'POST',
-          body: formdata
-        });
-        const res = await response.json();
-        console.log(res)
-        backupTestText.innerHTML = res.testResult
-      }
-
       async function saveSettings(){
         event.preventDefault();
         if (saveOutcomeAlert.hidden == false){
@@ -293,22 +277,9 @@
         formstuff = new FormData();
 
         //backups are turned on 
-        if (backupToggle.checked){
-
-          if (backupInput.value == ""){
-            //set alert to notify that you need to set a directory if backups are on.
-            backupAlert.innerText = "You need to designate a directory to save your backups to."
-            backupAlert.hidden = false;
-            error = true;
-          }
-          else
-          {
-            
-            formstuff.append("backupDirectory", backupInput.value);
-            formstuff.append("backupFreq",backupFreq.value);
-            formstuff.append("backupStatus", "on");
-
-          }
+        if (backupToggle.checked){ 
+          formstuff.append("backupFreq",backupFreq.value);
+          formstuff.append("backupStatus", "on");
         }
         else
         {

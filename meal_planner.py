@@ -106,7 +106,6 @@ def get_settings():
     cur.execute("SELECT * FROM settings")
     settings = cur.fetchone()
     backupDetails = backup_logic.schedulerStatus()
-
     
     return {"ok":"true","apiKey": OPENAI_API_KEY, "settings":settings, "backup_details": backupDetails, "backup_location": BACKUP_DIR}
 
@@ -121,7 +120,7 @@ def update_settings():
         if direcoryCheck['testResult'] == True:
             backupFreq = int(request.form['backupFreq'])
             backupStatus = request.form['backupStatus']
-            next_backup = backup_logic.turn_on_backups(backupFreq, backupDir)
+            next_backup = backup_logic.turn_on_backups(backupFreq)
 
             cur.execute("UPDATE settings SET backup_status = 'on', backup_location = ?, backup_frequency = ?",(backupDir, backupFreq))
         else:

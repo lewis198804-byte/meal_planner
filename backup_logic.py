@@ -94,16 +94,7 @@ def getNextBackupTime():
     backupJob = scheduler.get_job("backup_job")
     return backupJob.next_run_time.ctime()
 
-def turn_on_backups(interval:int,backupDir = ""):
-    #check to see if the program has access to the directory that the user has chosen 
-    if backupDir != "":
-        dirCheck = checkBackupDir(backupDir)
-        if dirCheck == True:
-            print("can read and write to directory")
-            #can make changes to the backup directory
-        else:
-            print("cant read and write to directory",backupDir)
-            #cannot make changes to the directory or it is an invalid directory
+def turn_on_backups(interval:int):
     scheduler.add_job(backup_recipe_db, "interval", days=interval,id="backup_job", replace_existing=True)
     if scheduler.state == 0:
         start_scheduler()

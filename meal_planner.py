@@ -120,9 +120,8 @@ def update_settings():
         backupStatus = request.form['backupStatus']
         next_backup = backup_logic.turn_on_backups(backupFreq)
 
-        cur.execute("UPDATE settings SET backup_status = 'on', backup_frequency = ?",(backupFreq))
+        cur.execute("UPDATE settings SET backup_status = 'on', backup_frequency = ?",(backupFreq,))
     
-
     elif request.form['backupStatus'] == "off":
         next_backup = backup_logic.turnOffBackups()
         cur.execute("UPDATE settings SET backup_status = 'off', backup_frequency = '' ")

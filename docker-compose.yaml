@@ -1,3 +1,4 @@
+
 services:
   init-dirs:
     image: busybox
@@ -7,20 +8,20 @@ services:
     volumes:
       - ./data:/data
       - ./static/recipe_images:/static/recipe_images
-      - ${BACKUP_DIR:-./backups}:/app/backups  
+      - ${BACKUP_DIR:-./backups}:/app/backups  # ← Added to init-dirs
 
   app:
     build: .
     ports:
       - "5002:5002"
-    env_file:  
-      - .env
     volumes:
       - ./data:/app/data
       - ./static/recipe_images:/app/static/recipe_images
-      - ${BACKUP_DIR:-./backups}:/app/backups  
+      - ${BACKUP_DIR:-./backups}:/app/backups  # ← Host-relative default
+      - ./.env:/app/.env
+
     environment:
       - FLASK_ENV=production
-      - BACKUP_DIR=${BACKUP_DIR:-./backups}  
+      - BACKUP_DIR=${BACKUP_DIR:-./backups}  # ← ./backups = stack-local
     depends_on:
       - init-dirs
